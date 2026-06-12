@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Competitor {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  country    String
+  overview   String
+  strengths  String[]
+  weaknesses String[]
+  features   CompetitorFeature[]
+}
+
+model Feature {
+  id          Int    @id @default(autoincrement())
+  name        String @unique
+  category    String
+  competitors CompetitorFeature[]
+}
+
+model CompetitorFeature {
+  competitorId Int
+  featureId    Int
+  status       String  // available | partial | none
+  notes        String?
+  competitor   Competitor @relation(fields: [competitorId], references: [id])
+  feature      Feature    @relation(fields: [featureId], references: [id])
+  @@id([competitorId, featureId])
+}
+
+model ComplaintCluster {
+  id       Int    @id @default(autoincrement())
+  issue    String
+  category String
+  volume   Int
+  trendPct Float
+  severity String // low | medium | high
+}
+
+model BeaconScore {
+  id         Int      @id @default(autoincrement())
+  area       String
+  score      Int
+  factors    Json
+  recordedAt DateTime @default(now())
+}
+
+model Opportunity {
+  id        Int     @id @default(autoincrement())
+  problem   String
+  evidence  String
+  impact    Int
+  frequency Int
+  reach     Int
+  effort    Int
+  status    String  @default("backlog") // backlog | planned | in-progress | shipped
+  owner     String?
+}
+
+model Signal {
+  id        Int      @id @default(autoincrement())
+  source    String
+  category  String
+  sentiment String   // positive | neutral | negative
+  text      String
+  createdAt DateTime @default(now())
+}
+
+model ChatMessage {
+  id        Int      @id @default(autoincrement())
+  sessionId String
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+}
