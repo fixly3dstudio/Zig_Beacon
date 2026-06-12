@@ -5,6 +5,7 @@ import "dotenv/config";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
+// Prisma 7: adapter option not yet reflected in generated client types
 const prisma = new PrismaClient({ adapter } as any);
 
 async function main() {
@@ -364,10 +365,11 @@ async function main() {
     { source: "Play Store", category: "Rewards", sentiment: "negative", text: "Lost 500 points without any warning they were expiring. At least send a push notification a week before." },
   ];
 
-  // Spread createdAt across the last 30 days
+  // Spread createdAt across the last 30 days (deterministic — no Math.random() so re-seeds are stable)
+  const TOTAL_SIGNALS = signalTemplates.length;
   const signals = signalTemplates.map((s, i) => ({
     ...s,
-    createdAt: new Date(now.getTime() - (i % 30) * 24 * 60 * 60 * 1000 - Math.random() * 12 * 60 * 60 * 1000),
+    createdAt: new Date(Date.now() - i * (30 * 24 * 60 * 60 * 1000 / TOTAL_SIGNALS)),
   }));
 
   for (const s of signals) {

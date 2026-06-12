@@ -5,6 +5,7 @@ import { Pool } from "pg";
 function createPrismaClient() {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   const adapter = new PrismaPg(pool);
+  // Prisma 7: adapter option not yet reflected in generated client types
   return new PrismaClient({ adapter } as any);
 }
 
