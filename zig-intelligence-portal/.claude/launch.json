@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "zig-beacon",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", ".", "--port", "5173"],
+      "port": 5173
+    }
+  ]
+}

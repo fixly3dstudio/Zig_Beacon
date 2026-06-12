@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zig Beacon — Product Intelligence Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+
+  <!-- TICKER -->
+  <div class="ticker-wrap" aria-hidden="true">
+    <div class="ticker-track">
+      <span class="ticker-item"><span class="ticker-dot teal"></span>Grab SG — Subscriptions redesign detected</span>
+      <span class="ticker-item"><span class="ticker-dot gold"></span>Booking drop-off at ride selection +2.1% this week</span>
+      <span class="ticker-item"><span class="ticker-dot teal"></span>Gojek — Airport flow update v4.2 live</span>
+      <span class="ticker-item"><span class="ticker-dot red"></span>Promotions Beacon Score dropped to 48 ↓</span>
+      <span class="ticker-item"><span class="ticker-dot gold"></span>AI Coach: 3 new roadmap opportunities identified</span>
+      <span class="ticker-item"><span class="ticker-dot teal"></span>Uber — In-app safety feature launched globally</span>
+      <span class="ticker-item"><span class="ticker-dot gold"></span>Customer Sentiment: Positive trend +4% (7-day)</span>
+      <span class="ticker-item"><span class="ticker-dot teal"></span>Grab SG — Subscriptions redesign detected</span>
+      <span class="ticker-item"><span class="ticker-dot gold"></span>Booking drop-off at ride selection +2.1% this week</span>
+      <span class="ticker-item"><span class="ticker-dot teal"></span>Gojek — Airport flow update v4.2 live</span>
+      <span class="ticker-item"><span class="ticker-dot red"></span>Promotions Beacon Score dropped to 48 ↓</span>
+      <span class="ticker-item"><span class="ticker-dot gold"></span>AI Coach: 3 new roadmap opportunities identified</span>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <span class="logo-beacon">
+          <span class="logo-pulse"></span>
+          <span class="logo-dot"></span>
+        </span>
+        <span class="logo-text">Zig <strong>Beacon</strong></span>
+      </a>
+      <div class="nav-links">
+        <a href="#platform">Platform</a>
+        <a href="#intelligence">Intelligence</a>
+        <a href="#signals">Signals</a>
+        <a href="#ai-coach">AI Coach</a>
+        <a href="#research">Research</a>
+      </div>
+      <div class="nav-actions">
+        <span class="nav-badge">v1.0 Beta</span>
+        <button class="btn-nav">Request Access</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="hero-content" data-animate="fade-up">
+      <div class="hero-eyebrow">
+        <span class="eyebrow-dot"></span>
+        ComfortDelGro Zig · Internal Platform
+      </div>
+      <h1 class="hero-title">
+        Product decisions<br>powered by<br><em class="title-accent">evidence</em>
+      </h1>
+      <p class="hero-sub">
+        One intelligence platform for competitor tracking, customer signals,<br>
+        UX opportunities, and AI-guided roadmap prioritization.
+      </p>
+      <div class="hero-cta">
+        <button class="btn-primary">
+          <span>Explore Platform</span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="btn-ghost">Watch 3-min overview</button>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="stat-val" data-count="18">18</span>
+          <span class="stat-label">Live data sources</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="hero-stat">
+          <span class="stat-val" data-count="200">200+</span>
+          <span class="stat-label">Competitor features tracked</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="hero-stat">
+          <span class="stat-val">Real-time</span>
+          <span class="stat-label">Intelligence updates</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual" data-animate="fade-in">
+      <div class="radar-wrap">
+        <!-- Beacon rings -->
+        <div class="ring ring-1"></div>
+        <div class="ring ring-2"></div>
+        <div class="ring ring-3"></div>
+        <div class="ring ring-4"></div>
+        <!-- Crosshair lines -->
+        <div class="radar-h-line"></div>
+        <div class="radar-v-line"></div>
+        <!-- Center -->
+        <div class="radar-center">
+          <span class="center-pulse"></span>
+          <img src="./assets/zig-logo.png" alt="Zig" class="radar-logo" />
+        </div>
+        <!-- Competitor signals -->
+        <div class="signal" style="--angle:30deg; --dist:38%;" data-label="Grab">
+          <div class="signal-dot"></div>
+          <div class="signal-label">Grab</div>
+        </div>
+        <div class="signal" style="--angle:110deg; --dist:44%;" data-label="Gojek">
+          <div class="signal-dot gold"></div>
+          <div class="signal-label">Gojek</div>
+        </div>
+        <div class="signal" style="--angle:200deg; --dist:36%;" data-label="TADA">
+          <div class="signal-dot teal"></div>
+          <div class="signal-label">TADA</div>
+        </div>
+        <div class="signal" style="--angle:290deg; --dist:42%;" data-label="Ryde">
+          <div class="signal-dot"></div>
+          <div class="signal-label">Ryde</div>
+        </div>
+        <div class="signal" style="--angle:60deg; --dist:62%;" data-label="Uber">
+          <div class="signal-dot gold"></div>
+          <div class="signal-label">Uber Global</div>
+        </div>
+        <div class="signal" style="--angle:160deg; --dist:58%;" data-label="Bolt">
+          <div class="signal-dot teal"></div>
+          <div class="signal-label">Bolt EU</div>
+        </div>
+        <div class="signal" style="--angle:245deg; --dist:65%;" data-label="DiDi">
+          <div class="signal-dot"></div>
+          <div class="signal-label">DiDi Asia</div>
+        </div>
+        <!-- Sweep line -->
+        <div class="radar-sweep"></div>
+      </div>
+      <!-- HUD elements -->
+      <div class="hud hud-tl">
+        <div class="hud-label">Beacon Score</div>
+        <div class="hud-val teal">87<span>/100</span></div>
+      </div>
+      <div class="hud hud-tr">
+        <div class="hud-label">Active Signals</div>
+        <div class="hud-val gold">142</div>
+      </div>
+      <div class="hud hud-bl">
+        <div class="hud-label">Live alerts</div>
+        <div class="hud-val">3 new</div>
+      </div>
+      <div class="hud hud-br">
+        <div class="hud-label">Last scan</div>
+        <div class="hud-val">2 min ago</div>
+      </div>
+    </div>
+
+    <!-- BG grid -->
+    <div class="hero-grid" aria-hidden="true"></div>
+  </section>
+
+  <!-- SCORE BAND -->
+  <section class="score-band" data-animate="fade-up">
+    <div class="score-band-inner">
+      <div class="score-intro">
+        <span class="score-label">Beacon Score</span>
+        <p>Real-time health across every product area</p>
+      </div>
+      <div class="score-items">
+        <div class="score-item">
+          <div class="score-name">Booking</div>
+          <div class="score-bar-wrap"><div class="score-bar" style="--w:91%"></div></div>
+          <div class="score-num good">91</div>
+        </div>
+        <div class="score-item">
+          <div class="score-name">Payments</div>
+          <div class="score-bar-wrap"><div class="score-bar" style="--w:87%"></div></div>
+          <div class="score-num good">87</div>
+        </div>
+        <div class="score-item">
+          <div class="score-name">Driverless</div>
+          <div class="score-bar-wrap"><div class="score-bar" style="--w:95%"></div></div>
+          <div class="score-num great">95</div>
+        </div>
+        <div class="score-item">
+          <div class="score-name">Promotions</div>
+          <div class="score-bar-wrap"><div class="score-bar warn" style="--w:48%"></div></div>
+          <div class="score-num warn">48</div>
+        </div>
+        <div class="score-item">
+          <div class="score-name">Airport</div>
+          <div class="score-bar-wrap"><div class="score-bar" style="--w:76%"></div></div>
+          <div class="score-num ok">76</div>
+        </div>
+        <div class="score-item">
+          <div class="score-name">Corporate</div>
+          <div class="score-bar-wrap"><div class="score-bar" style="--w:82%"></div></div>
+          <div class="score-num good">82</div>
+        </div>
+        <div class="score-item">
+          <div class="score-name">Rewards</div>
+          <div class="score-bar-wrap"><div class="score-bar" style="--w:71%"></div></div>
+          <div class="score-num ok">71</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLATFORM MODULES -->
+  <section class="platform" id="platform">
+    <div class="section-header" data-animate="fade-up">
+      <span class="section-tag">Platform</span>
+      <h2>Everything your team needs<br>to make better product calls</h2>
+    </div>
+
+    <div class="modules-grid">
+
+      <div class="module-card module-large" data-animate="fade-up" data-delay="0">
+        <div class="module-card-inner">
+          <div class="module-icon">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="14" r="6" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="14" r="2" fill="currentColor"/><line x1="14" y1="2" x2="14" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="14" y1="20" x2="14" y2="26" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="2" y1="14" x2="8" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="20" y1="14" x2="26" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <div class="module-tag">Core</div>
+          <h3>Competitor Intelligence</h3>
+          <p>Track every feature update, pricing shift, and UX change across Grab, Gojek, TADA, Ryde — and 30+ global mobility players.</p>
+          <div class="module-stats">
+            <span><em>5</em> SG competitors</span>
+            <span><em>30+</em> global tracked</span>
+            <span><em>Live</em> change detection</span>
+          </div>
+          <div class="module-preview-grid">
+            <div class="preview-competitor active">
+              <span class="comp-indicator"></span>Grab
+            </div>
+            <div class="preview-competitor">
+              <span class="comp-indicator gold"></span>Gojek
+            </div>
+            <div class="preview-competitor">
+              <span class="comp-indicator teal"></span>TADA
+            </div>
+            <div class="preview-competitor">
+              <span class="comp-indicator"></span>Ryde
+            </div>
+            <div class="preview-competitor">
+              <span class="comp-indicator gold"></span>Uber
+            </div>
+            <div class="preview-competitor">
+              <span class="comp-indicator teal"></span>Bolt EU
+            </div>
+          </div>
+        </div>
+        <div class="module-glow glow-gold"></div>
+      </div>
+
+      <div class="module-card" data-animate="fade-up" data-delay="100">
+        <div class="module-card-inner">
+          <div class="module-icon teal">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" stroke="currentColor" stroke-width="1.5"/><path d="M2 12h4m12 0h4M12 2v4m0 12v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <h3>Customer Signals</h3>
+          <p>App Store, Play Store, Reddit, social media — all customer feedback clustered and sentiment-scored automatically.</p>
+          <div class="signal-bars">
+            <div class="sig-row">
+              <span class="sig-name">Positive</span>
+              <div class="sig-bar-wrap"><div class="sig-bar teal" style="width:63%"></div></div>
+              <span class="sig-pct">63%</span>
+            </div>
+            <div class="sig-row">
+              <span class="sig-name">Neutral</span>
+              <div class="sig-bar-wrap"><div class="sig-bar mid" style="width:22%"></div></div>
+              <span class="sig-pct">22%</span>
+            </div>
+            <div class="sig-row">
+              <span class="sig-name">Negative</span>
+              <div class="sig-bar-wrap"><div class="sig-bar neg" style="width:15%"></div></div>
+              <span class="sig-pct">15%</span>
+            </div>
+          </div>
+        </div>
+        <div class="module-glow glow-teal"></div>
+      </div>
+
+      <div class="module-card" data-animate="fade-up" data-delay="150">
+        <div class="module-card-inner">
+          <div class="module-icon gold">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M9 19l-4-4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 15h6a4 4 0 0 0 4-4V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13 5l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>UX Opportunity Hub</h3>
+          <p>Prioritized design improvements scored by Impact × Frequency × Reach × Effort. Never miss a high-value UX fix again.</p>
+          <div class="opp-list">
+            <div class="opp-item">
+              <span class="opp-score high">94</span>
+              <span class="opp-name">Ride selection clarity</span>
+            </div>
+            <div class="opp-item">
+              <span class="opp-score high">88</span>
+              <span class="opp-name">Promo auto-apply flow</span>
+            </div>
+            <div class="opp-item">
+              <span class="opp-score mid">71</span>
+              <span class="opp-name">Airport pickup guidance</span>
+            </div>
+          </div>
+        </div>
+        <div class="module-glow glow-gold"></div>
+      </div>
+
+      <div class="module-card module-wide" data-animate="fade-up" data-delay="200">
+        <div class="module-card-inner">
+          <div class="module-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 3h18v12H3z" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 21h8M12 15v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M7 8l3 3 2-2 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>Product Health Dashboard</h3>
+          <p>Live Beacon Scores, feature adoption curves, drop-off funnels, and NPS impact — presented as an executive command center.</p>
+        </div>
+        <div class="health-sparklines">
+          <div class="sparkline-wrap">
+            <svg viewBox="0 0 200 60" fill="none" preserveAspectRatio="none">
+              <polyline points="0,50 20,42 40,38 60,44 80,30 100,28 120,20 140,18 160,14 180,12 200,8" stroke="#0FC9A7" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="0,50 20,42 40,38 60,44 80,30 100,28 120,20 140,18 160,14 180,12 200,8" stroke="url(#grad)" stroke-width="0" fill="url(#grad)" opacity="0.15"/>
+            </svg>
+            <span class="sparkline-label">Booking ↑</span>
+          </div>
+          <div class="sparkline-wrap">
+            <svg viewBox="0 0 200 60" fill="none" preserveAspectRatio="none">
+              <polyline points="0,20 20,18 40,22 60,28 80,32 100,38 120,42 140,46 160,50 180,54 200,52" stroke="#E8520A" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="sparkline-label">Promotions ↓</span>
+          </div>
+          <div class="sparkline-wrap">
+            <svg viewBox="0 0 200 60" fill="none" preserveAspectRatio="none">
+              <polyline points="0,40 20,38 40,36 60,32 80,30 100,28 120,22 140,20 160,18 180,16 200,14" stroke="#E8A020" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="sparkline-label">Airport ↑</span>
+          </div>
+        </div>
+        <div class="module-glow glow-subtle"></div>
+      </div>
+
+      <div class="module-card" data-animate="fade-up" data-delay="250">
+        <div class="module-card-inner">
+          <div class="module-icon teal">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.636 5.636l2.121 2.121M16.243 16.243l2.121 2.121M16.243 7.757l-2.121 2.121M7.757 16.243l-2.121 2.121" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <h3>Global Mobility Watch</h3>
+          <p>Track innovations from Uber, Waymo, Bolt, DiDi, and 40+ mobility companies across North America, Europe, Asia, and the Middle East.</p>
+          <div class="region-tags">
+            <span class="rtag">🇸🇬 Singapore</span>
+            <span class="rtag">🌏 Asia</span>
+            <span class="rtag">🇺🇸 North America</span>
+            <span class="rtag">🇪🇺 Europe</span>
+            <span class="rtag">🌍 Middle East</span>
+            <span class="rtag">🇦🇺 Australia</span>
+          </div>
+        </div>
+        <div class="module-glow glow-teal"></div>
+      </div>
+
+      <div class="module-card" data-animate="fade-up" data-delay="300">
+        <div class="module-card-inner">
+          <div class="module-icon gold">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 19V8a1 1 0 0 1 1-1h4l2-2h4l2 2h1a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5"/></svg>
+          </div>
+          <h3>Design Research Library</h3>
+          <p>Your internal Mobbin. Competitor screenshots, UX audits, journey maps, and benchmark studies — all searchable.</p>
+          <div class="lib-meta">
+            <div class="lib-item"><span class="lib-num">340</span> Screenshots</div>
+            <div class="lib-item"><span class="lib-num">48</span> Audit reports</div>
+            <div class="lib-item"><span class="lib-num">22</span> Journey maps</div>
+          </div>
+        </div>
+        <div class="module-glow glow-gold"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- AI COACH -->
+  <section class="ai-coach-section" id="ai-coach" data-animate="fade-up">
+    <div class="ai-coach-inner">
+      <div class="ai-coach-left">
+        <span class="section-tag gold">AI Product Coach</span>
+        <h2>Ask anything.<br>Get evidence-backed answers.</h2>
+        <p>Natural language queries across every data source. Ask about competitors, customer pain points, feature gaps, or what to build next — and get structured, cited answers in seconds.</p>
+        <div class="query-examples">
+          <div class="query-example" onclick="selectQuery(this)">What are users complaining about most?</div>
+          <div class="query-example" onclick="selectQuery(this)">How does Grab handle airport pickup?</div>
+          <div class="query-example" onclick="selectQuery(this)">Which competitor has the best loyalty program?</div>
+          <div class="query-example" onclick="selectQuery(this)">What should Zig improve next quarter?</div>
+          <div class="query-example" onclick="selectQuery(this)">Top mobility innovations this month</div>
+        </div>
+      </div>
+      <div class="ai-coach-right">
+        <div class="coach-terminal">
+          <div class="terminal-header">
+            <span class="term-dot red-dot"></span>
+            <span class="term-dot amber-dot"></span>
+            <span class="term-dot green-dot"></span>
+            <span class="term-title">AI Product Coach — Zig Beacon</span>
+          </div>
+          <div class="terminal-body" id="terminal-body">
+            <div class="term-query">
+              <span class="term-prompt">›</span>
+              <span id="term-query-text">What are users complaining about most?</span>
+            </div>
+            <div class="term-response" id="term-response">
+              <div class="term-tag">Analysing 18 sources · 3,421 signals</div>
+              <div class="term-answer">
+                <p>Top complaint clusters this month:</p>
+                <ol>
+                  <li><strong>Promotions not applied automatically</strong> — 847 mentions (↑34%)</li>
+                  <li><strong>Ride selection UI unclear</strong> — 612 mentions</li>
+                  <li><strong>Long ETA at airport terminal</strong> — 489 mentions</li>
+                  <li><strong>Payment flow extra steps</strong> — 331 mentions (↑18%)</li>
+                </ol>
+                <p class="term-insight">💡 <em>Promotions and Airport combined account for 40% of all complaints. High opportunity for UX intervention.</em></p>
+              </div>
+              <div class="term-sources">Sources: App Store · Play Store · Reddit SG · Support tickets</div>
+            </div>
+          </div>
+          <div class="terminal-input">
+            <span class="term-prompt">›</span>
+            <input type="text" id="coach-input" placeholder="Ask the AI Coach anything..." autocomplete="off" />
+            <button class="term-send" onclick="sendQuery()">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTELLIGENCE FEED -->
+  <section class="intel-feed" id="intelligence" data-animate="fade-up">
+    <div class="section-header">
+      <span class="section-tag">Live Intelligence</span>
+      <h2>What's happening right now</h2>
+    </div>
+    <div class="feed-grid">
+      <div class="feed-item urgent">
+        <div class="feed-meta">
+          <span class="feed-source">Competitor Alert</span>
+          <span class="feed-time">2 min ago</span>
+        </div>
+        <p class="feed-title">Grab SG launched redesigned subscription management flow</p>
+        <div class="feed-tags">
+          <span class="ftag">Subscriptions</span>
+          <span class="ftag">Grab</span>
+          <span class="ftag red">High Impact</span>
+        </div>
+      </div>
+      <div class="feed-item">
+        <div class="feed-meta">
+          <span class="feed-source">Customer Signal</span>
+          <span class="feed-time">14 min ago</span>
+        </div>
+        <p class="feed-title">Reddit SG thread: "Why does Zig promo code not auto-apply?" — 127 upvotes</p>
+        <div class="feed-tags">
+          <span class="ftag">Promotions</span>
+          <span class="ftag">Reddit</span>
+          <span class="ftag gold">UX Opportunity</span>
+        </div>
+      </div>
+      <div class="feed-item">
+        <div class="feed-meta">
+          <span class="feed-source">Global Innovation</span>
+          <span class="feed-time">1 hr ago</span>
+        </div>
+        <p class="feed-title">Uber launched AI-powered ride preference learning in 12 cities</p>
+        <div class="feed-tags">
+          <span class="ftag">AI Features</span>
+          <span class="ftag">Uber</span>
+          <span class="ftag teal">Innovation Watch</span>
+        </div>
+      </div>
+      <div class="feed-item">
+        <div class="feed-meta">
+          <span class="feed-source">Product Health</span>
+          <span class="feed-time">3 hr ago</span>
+        </div>
+        <p class="feed-title">Airport booking conversion dropped 3.2% week-over-week — investigation needed</p>
+        <div class="feed-tags">
+          <span class="ftag">Airport</span>
+          <span class="ftag">Conversion</span>
+          <span class="ftag red">Alert</span>
+        </div>
+      </div>
+      <div class="feed-item">
+        <div class="feed-meta">
+          <span class="feed-source">Beacon Score</span>
+          <span class="feed-time">6 hr ago</span>
+        </div>
+        <p class="feed-title">Driverless product area hit new high score of 95/100 following latest update</p>
+        <div class="feed-tags">
+          <span class="ftag">Driverless</span>
+          <span class="ftag teal">Score High</span>
+        </div>
+      </div>
+      <div class="feed-item">
+        <div class="feed-meta">
+          <span class="feed-source">Design Research</span>
+          <span class="feed-time">Yesterday</span>
+        </div>
+        <p class="feed-title">New UX benchmark: Gojek's driver-matching screen vs Zig — gap analysis complete</p>
+        <div class="feed-tags">
+          <span class="ftag">Driver UX</span>
+          <span class="ftag">Gojek</span>
+          <span class="ftag gold">Research</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROLES SECTION -->
+  <section class="roles-section" id="signals" data-animate="fade-up">
+    <div class="section-header">
+      <span class="section-tag">Built for every team</span>
+      <h2>One platform.<br>Multiple perspectives.</h2>
+    </div>
+    <div class="roles-grid">
+      <div class="role-card" data-animate="fade-up" data-delay="0">
+        <div class="role-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="2" y="3" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 19h8M11 16v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <h4>UX Designers</h4>
+        <ul>
+          <li>Competitor flows & screenshots</li>
+          <li>UX pattern library</li>
+          <li>Customer pain points mapped to screens</li>
+          <li>AI UX reviewer</li>
+          <li>Design system health</li>
+        </ul>
+      </div>
+      <div class="role-card" data-animate="fade-up" data-delay="80">
+        <div class="role-icon gold">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 16V8a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" stroke="currentColor" stroke-width="1.5"/><path d="M8 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" stroke="currentColor" stroke-width="1.5"/><path d="M9 11h4M11 9v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <h4>Product Managers</h4>
+        <ul>
+          <li>Prioritization framework</li>
+          <li>Feature opportunity scoring</li>
+          <li>Competitor benchmarking</li>
+          <li>Roadmap evidence inputs</li>
+          <li>Beacon Score by product area</li>
+        </ul>
+      </div>
+      <div class="role-card" data-animate="fade-up" data-delay="160">
+        <div class="role-icon teal">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 3v4M11 15v4M3 11h4M15 11h4M5.636 5.636l2.829 2.829M13.536 13.536l2.828 2.828M5.636 16.364l2.829-2.829M13.536 8.464l2.828-2.828" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="11" cy="11" r="3" stroke="currentColor" stroke-width="1.5"/></svg>
+        </div>
+        <h4>UX Researchers</h4>
+        <ul>
+          <li>Customer sentiment analysis</li>
+          <li>Complaint cluster heatmaps</li>
+          <li>Emotion journey mapping</li>
+          <li>User feedback aggregation</li>
+          <li>Research library access</li>
+        </ul>
+      </div>
+      <div class="role-card" data-animate="fade-up" data-delay="240">
+        <div class="role-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 7h16M3 11h10M3 15h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="18" cy="15" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M20.5 17.5l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <h4>Leadership</h4>
+        <ul>
+          <li>Product scorecards</li>
+          <li>Strategic opportunity reports</li>
+          <li>Competitive positioning</li>
+          <li>Weekly automated briefings</li>
+          <li>PDF/PowerPoint exports</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA SECTION -->
+  <section class="cta-section" data-animate="fade-up">
+    <div class="cta-inner">
+      <div class="cta-beacon">
+        <div class="cta-ring cta-ring-1"></div>
+        <div class="cta-ring cta-ring-2"></div>
+        <div class="cta-ring cta-ring-3"></div>
+        <div class="cta-center-dot"></div>
+      </div>
+      <h2>Make every product decision<br>with confidence</h2>
+      <p>Join the Zig product and design team on Beacon — the single source of truth for competitive intelligence, customer voice, and roadmap evidence.</p>
+      <div class="cta-buttons">
+        <button class="btn-primary large">Request Platform Access</button>
+        <button class="btn-ghost large">Download Overview PDF</button>
+      </div>
+      <p class="cta-note">Internal platform · ComfortDelGro Zig · Version 1.0</p>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <span class="logo-beacon small">
+            <span class="logo-pulse"></span>
+            <span class="logo-dot"></span>
+          </span>
+          <span class="logo-text">Zig <strong>Beacon</strong></span>
+        </div>
+        <p>Product Intelligence & Global Mobility Research Platform</p>
+        <p class="footer-org">ComfortDelGro Zig · Product Design & Product Management</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h5>Platform</h5>
+          <a href="#">Dashboard</a>
+          <a href="#">Competitor Intelligence</a>
+          <a href="#">Customer Signals</a>
+          <a href="#">Product Health</a>
+          <a href="#">Beacon Score</a>
+        </div>
+        <div class="footer-col">
+          <h5>Intelligence</h5>
+          <a href="#">Global Mobility Watch</a>
+          <a href="#">Innovation Feed</a>
+          <a href="#">Feature Gap Radar</a>
+          <a href="#">Competitor Change Detector</a>
+        </div>
+        <div class="footer-col">
+          <h5>Research</h5>
+          <a href="#">UX Opportunity Hub</a>
+          <a href="#">Design Research Library</a>
+          <a href="#">UX Pattern Library</a>
+          <a href="#">Design System Health</a>
+          <a href="#">AI UX Reviewer</a>
+        </div>
+        <div class="footer-col">
+          <h5>AI</h5>
+          <a href="#">AI Product Coach</a>
+          <a href="#">AI Innovation Scout</a>
+          <a href="#">Product Scorecards</a>
+          <a href="#">Settings</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 ComfortDelGro Zig. Internal use only.</span>
+      <span class="footer-version">Zig Beacon v1.0 · Phase 1</span>
+    </div>
+  </footer>
+
+  <script src="./script.js"></script>
+</body>
+</html>
