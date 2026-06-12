@@ -49,19 +49,21 @@ async function main() {
     },
     {
       name: "Gojek",
-      country: "Indonesia",
+      country: "Singapore",
       overview:
-        "Gojek entered Singapore as part of its Southeast Asian expansion and offers competitive pricing to win share from Grab. It has strong brand equity with Indonesian expats and price-sensitive riders. Its Singapore operation is smaller but growing, with a focus on value fares.",
+        "Gojek SG operates in Singapore as a licensed ride-hailing platform competing directly with Grab and Zig. It focuses on value-for-money rides with competitive surge pricing, and has been expanding its driver pool and product features specifically for the Singapore market since 2019.",
       strengths: [
-        "Competitive base fares often 10–20% cheaper than Grab during off-peak",
-        "Strong brand among Indonesian expatriate community",
-        "Clean, no-frills booking UX with fast load times",
+        "Competitive base fares consistently 10–20% lower than Grab during off-peak hours",
+        "GoCar and GoFlash tiers cater to both budget and premium Singapore riders",
+        "Clean booking UX with fast load times optimised for Singapore network conditions",
+        "Promo auto-apply at checkout is available and well-implemented",
       ],
       weaknesses: [
-        "Smaller driver pool in Singapore leads to longer ETAs",
-        "Limited corporate offering compared to Zig and Grab",
-        "Loyalty and rewards programme is underdeveloped in Singapore",
-        "No flight tracking or airport-optimised pickup flow",
+        "Driver supply in Singapore remains thinner than Grab, leading to higher ETAs during peak hours",
+        "No flight tracking or dedicated airport pickup flow for Changi Terminal zones",
+        "Loyalty programme (GoRewards) is limited in Singapore vs Grab Rewards",
+        "No ride subscription plan available in SG market",
+        "Corporate billing portal is less mature than Zig and Grab Business",
       ],
     },
     {
