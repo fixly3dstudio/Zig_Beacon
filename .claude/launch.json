@@ -6,6 +6,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", "zig-intelligence-portal", "-l", "5173"],
       "port": 5173
+    },
+    {
+      "name": "portal",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "portal"],
+      "port": 3000
     }
   ]
 }
