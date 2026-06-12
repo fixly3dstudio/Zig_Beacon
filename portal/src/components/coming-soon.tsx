@@ -14,7 +14,7 @@ export function ComingSoon({
 
       <div className="mt-8 flex flex-col items-center justify-center rounded-xl border border-border bg-surface px-8 py-20 text-center">
         <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-background text-muted">
-          <Icon size={22} />
+          <Icon aria-hidden="true" size={22} />
         </div>
         <p className="mt-4 text-sm font-medium text-foreground">{title}</p>
         <p className="mt-1 text-[13px] text-muted">Coming soon</p>

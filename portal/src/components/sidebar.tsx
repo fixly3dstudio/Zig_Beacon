@@ -4,8 +4,43 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react";
 import { navGroups, settingsItem, isItemActive } from "./nav-config";
+
+interface NavLinkProps {
+  item: { href: string; name: string; icon: LucideIcon };
+  active: boolean;
+  collapsed: boolean;
+}
+
+function NavLink({ item, active, collapsed }: NavLinkProps) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      title={collapsed ? item.name : undefined}
+      className={`relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+        collapsed ? "justify-center" : ""
+      } ${
+        active
+          ? "text-background"
+          : "text-muted hover:bg-surface hover:text-foreground"
+      }`}
+    >
+      {active && (
+        <motion.span
+          layoutId="active-nav"
+          className="absolute inset-0 rounded-lg bg-foreground"
+          transition={{ type: "spring", stiffness: 500, damping: 40 }}
+        />
+      )}
+      <Icon size={18} className="relative z-10 shrink-0" />
+      {!collapsed && (
+        <span className="relative z-10 whitespace-nowrap">{item.name}</span>
+      )}
+    </Link>
+  );
+}
 
 const STORAGE_KEY = "zig-beacon-sidebar-collapsed";
 
@@ -72,7 +107,6 @@ export function Sidebar() {
             <ul className="flex flex-col gap-0.5">
               {group.items.map((item, ii) => {
                 const active = isItemActive(item.href, pathname);
-                const Icon = item.icon;
                 return (
                   <motion.li
                     key={item.href}
@@ -80,29 +114,7 @@ export function Sidebar() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: (gi * 3 + ii) * 0.03, duration: 0.2 }}
                   >
-                    <Link
-                      href={item.href}
-                      title={collapsed ? item.name : undefined}
-                      className={`relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                        collapsed ? "justify-center" : ""
-                      } ${
-                        active
-                          ? "text-background"
-                          : "text-muted hover:bg-surface hover:text-foreground"
-                      }`}
-                    >
-                      {active && (
-                        <motion.span
-                          layoutId="active-nav"
-                          className="absolute inset-0 rounded-lg bg-foreground"
-                          transition={{ type: "spring", stiffness: 500, damping: 40 }}
-                        />
-                      )}
-                      <Icon size={18} className="relative z-10 shrink-0" />
-                      {!collapsed && (
-                        <span className="relative z-10 whitespace-nowrap">{item.name}</span>
-                      )}
-                    </Link>
+                    <NavLink item={item} active={active} collapsed={collapsed} />
                   </motion.li>
                 );
               })}
@@ -113,33 +125,11 @@ export function Sidebar() {
 
       {/* Bottom */}
       <div className="mt-auto border-t border-border px-3 py-3">
-        {(() => {
-          const active = isItemActive(settingsItem.href, pathname);
-          const Icon = settingsItem.icon;
-          return (
-            <Link
-              href={settingsItem.href}
-              title={collapsed ? settingsItem.name : undefined}
-              className={`relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                collapsed ? "justify-center" : ""
-              } ${
-                active
-                  ? "text-background"
-                  : "text-muted hover:bg-surface hover:text-foreground"
-              }`}
-            >
-              {active && (
-                <motion.span
-                  layoutId="active-nav"
-                  className="absolute inset-0 rounded-lg bg-foreground"
-                  transition={{ type: "spring", stiffness: 500, damping: 40 }}
-                />
-              )}
-              <Icon size={18} className="relative z-10 shrink-0" />
-              {!collapsed && <span className="relative z-10">{settingsItem.name}</span>}
-            </Link>
-          );
-        })()}
+        <NavLink
+          item={settingsItem}
+          active={isItemActive(settingsItem.href, pathname)}
+          collapsed={collapsed}
+        />
 
         <div
           className={`mt-2 flex items-center gap-3 rounded-lg px-3 py-2 ${

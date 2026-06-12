@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { getPageTitle } from "./nav-config";
 
@@ -15,19 +16,24 @@ function formatToday(): string {
 export function Topbar() {
   const pathname = usePathname();
   const title = getPageTitle(pathname);
+  const [today, setToday] = useState("");
+
+  useEffect(() => {
+    setToday(formatToday());
+  }, []);
 
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-background px-8">
-      <h2 className="text-sm font-medium text-foreground">{title}</h2>
+      <span className="text-sm font-medium text-foreground">{title}</span>
       <div className="flex items-center gap-5">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
+            <span aria-hidden="true" className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
+            <span aria-hidden="true" className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
           </span>
           <span className="text-xs text-muted">Live</span>
         </div>
-        <span className="text-[13px] text-muted">{formatToday()}</span>
+        <span suppressHydrationWarning className="text-[13px] text-muted">{today}</span>
       </div>
     </header>
   );
