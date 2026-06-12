@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -43,24 +44,30 @@ function NavLink({ item, active, collapsed }: NavLinkProps) {
 }
 
 const STORAGE_KEY = "zig-beacon-sidebar-collapsed";
+const COLLAPSE_EVENT = "zig-beacon-sidebar-toggle";
+
+function subscribeToCollapse(callback: () => void) {
+  window.addEventListener(COLLAPSE_EVENT, callback);
+  window.addEventListener("storage", callback);
+  return () => {
+    window.removeEventListener(COLLAPSE_EVENT, callback);
+    window.removeEventListener("storage", callback);
+  };
+}
+
+function readCollapsed() {
+  return localStorage.getItem(STORAGE_KEY) === "true";
+}
 
 export function Sidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "true") setCollapsed(true);
-    setMounted(true);
-  }, []);
+  // Server snapshot is always "expanded"; localStorage is read once the client
+  // hydrates, without a setState-in-effect cascade.
+  const collapsed = useSyncExternalStore(subscribeToCollapse, readCollapsed, () => false);
 
   const toggle = () => {
-    setCollapsed((prev) => {
-      const next = !prev;
-      localStorage.setItem(STORAGE_KEY, String(next));
-      return next;
-    });
+    localStorage.setItem(STORAGE_KEY, String(!collapsed));
+    window.dispatchEvent(new Event(COLLAPSE_EVENT));
   };
 
   return (
@@ -70,8 +77,15 @@ export function Sidebar() {
     >
       {/* Brand header */}
       <div className="flex h-14 items-center gap-2.5 px-4 border-b border-border">
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-foreground">
-          <span className="h-2 w-2 rounded-full bg-background" />
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[6px] border border-white bg-background">
+          <Image
+            src="/zig-logo.png"
+            alt="Zig"
+            width={36}
+            height={36}
+            className="h-full w-full object-cover"
+            priority
+          />
         </div>
         {!collapsed && (
           <div className="flex items-center gap-2 overflow-hidden">
@@ -110,7 +124,7 @@ export function Sidebar() {
                 return (
                   <motion.li
                     key={item.href}
-                    initial={mounted ? false : { opacity: 0, x: -8 }}
+                    initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: (gi * 3 + ii) * 0.03, duration: 0.2 }}
                   >
@@ -130,22 +144,6 @@ export function Sidebar() {
           active={isItemActive(settingsItem.href, pathname)}
           collapsed={collapsed}
         />
-
-        <div
-          className={`mt-2 flex items-center gap-3 rounded-lg px-3 py-2 ${
-            collapsed ? "justify-center" : ""
-          }`}
-        >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface border border-border text-[11px] font-semibold text-foreground">
-            HS
-          </div>
-          {!collapsed && (
-            <div className="flex flex-col overflow-hidden leading-tight">
-              <span className="text-sm font-medium text-foreground truncate">Harsai</span>
-              <span className="text-[11px] text-muted truncate">Product Design</span>
-            </div>
-          )}
-        </div>
       </div>
     </aside>
   );

@@ -4,11 +4,13 @@ import {
   Globe2,
   Lightbulb,
   MessageSquareText,
+  Newspaper,
   Flame,
   HeartPulse,
   Gauge,
   Target,
   Sparkles,
+  ScanEye,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -32,13 +34,14 @@ export const navGroups: NavGroup[] = [
       { name: "Competitors", href: "/competitors", icon: Swords },
       { name: "Global Mobility", href: "/global-mobility", icon: Globe2 },
       { name: "Innovation Watch", href: "/innovation-watch", icon: Lightbulb },
+      { name: "Transport News", href: "/transport-news", icon: Newspaper },
     ],
   },
   {
     label: "Customers",
     items: [
       { name: "Customer Signals", href: "/signals", icon: MessageSquareText },
-      { name: "Complaint Heatmap", href: "/complaint-heatmap", icon: Flame },
+      { name: "Complaints", href: "/complaint-heatmap", icon: Flame },
     ],
   },
   {
@@ -49,7 +52,13 @@ export const navGroups: NavGroup[] = [
       { name: "Opportunity Hub", href: "/opportunities", icon: Target },
     ],
   },
-  { label: "AI", items: [{ name: "AI Coach", href: "/coach", icon: Sparkles }] },
+  {
+    label: "AI",
+    items: [
+      { name: "AI Coach", href: "/coach", icon: Sparkles },
+      { name: "Visual Trainer", href: "/visual-review", icon: ScanEye },
+    ],
+  },
 ];
 
 export const settingsItem: NavItem = { name: "Settings", href: "/settings", icon: Settings };

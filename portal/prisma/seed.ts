@@ -279,7 +279,6 @@ async function main() {
   // ─── BeaconScores ─────────────────────────────────────────────────────────────
   await prisma.beaconScore.deleteMany();
   const now = new Date();
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   const scoreData = [
     { area: "Booking",    score: 91, factors: { satisfaction: 88, adoption: 92, retention: 90, competitorPosition: 85, businessImpact: 94, complaintSeverity: 78 } },
@@ -291,12 +290,7 @@ async function main() {
     { area: "Rewards",    score: 71, factors: { satisfaction: 68, adoption: 74, retention: 72, competitorPosition: 62, businessImpact: 76, complaintSeverity: 55 } },
   ];
 
-  // Current scores
-  for (const s of scoreData) {
-    await prisma.beaconScore.create({ data: { ...s, recordedAt: now } });
-  }
-
-  // 30-day-ago scores (slightly lower to show trend)
+  // 30-day-ago baseline per area, used as the start of the trend
   const olderScoreData = [
     { area: "Booking",    score: 88, factors: { satisfaction: 84, adoption: 90, retention: 87, competitorPosition: 82, businessImpact: 91, complaintSeverity: 74 } },
     { area: "Payments",   score: 83, factors: { satisfaction: 80, adoption: 85, retention: 84, competitorPosition: 79, businessImpact: 86, complaintSeverity: 68 } },
@@ -304,11 +298,29 @@ async function main() {
     { area: "Promotions", score: 44, factors: { satisfaction: 38, adoption: 50, retention: 41, competitorPosition: 34, businessImpact: 56, complaintSeverity: 28 } },
     { area: "Airport",    score: 71, factors: { satisfaction: 68, adoption: 73, retention: 70, competitorPosition: 63, businessImpact: 77, complaintSeverity: 52 } },
     { area: "Corporate",  score: 79, factors: { satisfaction: 77, adoption: 82, retention: 80, competitorPosition: 74, businessImpact: 84, complaintSeverity: 66 } },
-    { area: "Rewards",    score: 67, factors: { satisfaction: 64, adoption: 70, retention: 68, competitorPosition: 58, businessImpact: 72, complaintSeverity: 50 } },
+    { area: "Rewards",    score: 67, factors: { satisfaction: 64, adoption: 70, retention: 68, complaintSeverity: 50, competitorPosition: 58, businessImpact: 72 } },
   ];
 
-  for (const s of olderScoreData) {
-    await prisma.beaconScore.create({ data: { ...s, recordedAt: thirtyDaysAgo } });
+  // 10 weekly snapshots per area: deterministic walk from the 10-week-ago
+  // baseline to the current score, so trends and sparklines have real shape.
+  const WEEKS = 10;
+  for (const [areaIndex, current] of scoreData.entries()) {
+    const older = olderScoreData[areaIndex];
+    const start = older.score - 3; // extend the trend slightly further back
+    for (let week = 0; week < WEEKS; week++) {
+      const t = week / (WEEKS - 1);
+      // deterministic wobble so lines aren't perfectly straight
+      const wobble = Math.round(Math.sin(areaIndex * 2.7 + week * 1.9) * 2);
+      const score =
+        week === WEEKS - 1
+          ? current.score
+          : Math.max(0, Math.min(100, Math.round(start + (current.score - start) * t) + wobble));
+      const recordedAt = new Date(now.getTime() - (WEEKS - 1 - week) * 7 * 24 * 60 * 60 * 1000);
+      const factors = week === WEEKS - 1 ? current.factors : older.factors;
+      await prisma.beaconScore.create({
+        data: { area: current.area, score, factors, recordedAt },
+      });
+    }
   }
 
   // ─── Opportunities ────────────────────────────────────────────────────────────

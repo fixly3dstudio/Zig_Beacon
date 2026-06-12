@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { getPageTitle } from "./nav-config";
 
@@ -16,11 +15,9 @@ function formatToday(): string {
 export function Topbar() {
   const pathname = usePathname();
   const title = getPageTitle(pathname);
-  const [today, setToday] = useState("");
-
-  useEffect(() => {
-    setToday(formatToday());
-  }, []);
+  // Rendered on both server and client; suppressHydrationWarning on the span
+  // covers any timezone difference between the two.
+  const today = formatToday();
 
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-background px-8">
