@@ -214,7 +214,7 @@ export function CoachChat() {
           <span
             className={cn(
               "h-1.5 w-1.5 rounded-full",
-              isStreaming ? "animate-pulse bg-brand" : "bg-emerald-500"
+              isStreaming ? "animate-pulse bg-brand" : "bg-success"
             )}
           />
           {isStreaming
@@ -259,7 +259,7 @@ export function CoachChat() {
                   key={s.title}
                   type="button"
                   onClick={() => void sendMessage(s.prompt)}
-                  className="rounded-xl border border-border bg-background p-4 text-left transition-colors hover:border-brand/40 hover:bg-[rgba(3,103,252,0.03)]"
+                  className="rounded-xl border border-border bg-background p-4 text-left transition-colors hover:border-brand/40 hover:bg-brand/5"
                 >
                   <p className="text-[13px] font-semibold text-foreground">{s.title}</p>
                   <p className="mt-1 text-xs leading-5 text-muted">{s.prompt}</p>
@@ -297,7 +297,7 @@ export function CoachChat() {
                       className={cn(
                         "max-w-[92%] text-foreground",
                         message.offline &&
-                          "rounded-2xl border border-amber-200 bg-amber-50/60 px-4 py-3"
+                          "rounded-2xl border border-warn/30 bg-warn/10 px-4 py-3"
                       )}
                     >
                       {message.pending ? (

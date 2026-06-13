@@ -200,16 +200,16 @@ const rankedInnovations = [...innovations].sort((a, b) => {
 function stageClass(stage: Stage) {
   if (stage === "Live") return "border-foreground bg-foreground text-background";
   if (stage === "Pilot") {
-    return "border-brand/20 bg-[rgba(3,103,252,0.08)] text-brand";
+    return "border-brand/20 bg-brand/10 text-brand";
   }
-  if (stage === "Emerging") return "border-zinc-300 bg-background text-foreground";
-  return "border-zinc-200 bg-zinc-100 text-muted";
+  if (stage === "Emerging") return "border-track bg-background text-foreground";
+  return "border-track bg-elevated text-muted";
 }
 
 function horizonClass(horizon: Horizon) {
   if (horizon === "Now") return "bg-brand";
   if (horizon === "Next") return "bg-foreground";
-  return "bg-zinc-300";
+  return "bg-track";
 }
 
 function Bar({
@@ -220,7 +220,7 @@ function Bar({
   color?: string;
 }) {
   return (
-    <div className="h-1.5 overflow-hidden rounded-full bg-zinc-200">
+    <div className="h-1.5 overflow-hidden rounded-full bg-track">
       <div
         className={cn("h-full rounded-full", color)}
         style={{ width: `${value}%` }}
@@ -372,7 +372,7 @@ export default function Page() {
                       <p className="mt-1 text-sm font-medium tabular-nums text-foreground">
                         {item.effort}
                       </p>
-                      <Bar value={item.effort} color="bg-zinc-400" />
+                      <Bar value={item.effort} color="bg-muted" />
                     </div>
                   </div>
                 </div>
@@ -420,7 +420,7 @@ export default function Page() {
                   <div className="mt-3">
                     <Bar
                       value={item.intensity}
-                      color={rising ? "bg-brand" : "bg-zinc-400"}
+                      color={rising ? "bg-brand" : "bg-muted"}
                     />
                   </div>
                 </div>
@@ -529,8 +529,8 @@ export default function Page() {
                             className={cn(
                               "inline-flex rounded-full px-2.5 py-1 text-xs font-medium",
                               topBet
-                                ? "bg-[rgba(3,103,252,0.08)] text-brand"
-                                : "bg-zinc-100 text-muted"
+                                ? "bg-brand/10 text-brand"
+                                : "bg-elevated text-muted"
                             )}
                           >
                             {topBet ? "Prototype next" : "Keep watching"}

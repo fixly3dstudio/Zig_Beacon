@@ -15,8 +15,8 @@ import { ImpactEffortMatrix } from "@/components/dashboard/impact-effort-matrix"
 
 export const dynamic = "force-dynamic";
 
-const RED = "#dc2626";
-const AMBER = "#f59e0b";
+const RED = "var(--danger)";
+const AMBER = "var(--warn)";
 
 function relativeTime(date: Date) {
   const diff = Date.now() - date.getTime();
@@ -49,7 +49,7 @@ function Delta({ value, suffix = "" }: { value: number; suffix?: string }) {
     <span
       className={cn(
         "inline-flex items-center gap-0.5 text-xs font-medium tabular-nums",
-        positive ? "text-brand" : "text-[#dc2626]"
+        positive ? "text-brand" : "text-[var(--danger)]"
       )}
     >
       {positive ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
@@ -112,8 +112,8 @@ export default async function Home() {
     totalSignals > 0 ? Math.round((n / totalSignals) * 100) : 0;
 
   const sentimentRows = [
-    { label: "Positive", count: positive, color: "#0a0a0a" },
-    { label: "Neutral", count: neutral, color: "#d4d4d8" },
+    { label: "Positive", count: positive, color: "var(--foreground)" },
+    { label: "Neutral", count: neutral, color: "var(--track)" },
     { label: "Negative", count: negative, color: RED },
   ];
 
@@ -185,9 +185,9 @@ export default async function Home() {
 
       {/* Attention banner */}
       {weakest && fastestRising && topOpportunity && (
-        <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 sm:flex-row sm:items-center">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100">
-            <AlertTriangle size={17} className="text-amber-600" />
+        <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-warn/30 bg-warn/10 p-4 sm:flex-row sm:items-center">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-warn/20">
+            <AlertTriangle size={17} className="text-warn" />
           </div>
           <p className="flex-1 text-[13px] leading-6 text-foreground">
             <span className="font-semibold">{weakest.area}</span> is the weakest area at{" "}
@@ -224,7 +224,7 @@ export default async function Home() {
               />
               <span className="ml-1 text-sm text-muted">/100</span>
             </div>
-            <Sparkline values={overallHistory} color="#0367fc" fill />
+            <Sparkline values={overallHistory} color="var(--brand)" fill />
           </div>
         </Card>
 
@@ -306,7 +306,7 @@ export default async function Home() {
                     values={a.history}
                     width={120}
                     height={24}
-                    color={critical ? RED : "#0a0a0a"}
+                    color={critical ? RED : "var(--foreground)"}
                   />
                   <div className="flex flex-1 items-center justify-end gap-4">
                     <Delta value={delta} />
@@ -333,7 +333,7 @@ export default async function Home() {
         <Card className="col-span-12 lg:col-span-5">
           <div className="flex items-center justify-between">
             <h2 className="text-[15px] font-medium text-foreground">Customer sentiment</h2>
-            <ViewLink href="/signals" />
+            <ViewLink href="/complaint-heatmap" />
           </div>
           <div className="mt-6 space-y-5">
             {sentimentRows.map((row, i) => (
@@ -369,7 +369,7 @@ export default async function Home() {
             {topComplaints.map((c, i) => {
               const rising = c.trendPct >= 0;
               const sevColor =
-                c.severity === "high" ? RED : c.severity === "medium" ? AMBER : "#a1a1aa";
+                c.severity === "high" ? RED : c.severity === "medium" ? AMBER : "var(--muted)";
               const share = totalComplaintVolume
                 ? Math.round((c.volume / totalComplaintVolume) * 100)
                 : 0;
@@ -396,7 +396,7 @@ export default async function Home() {
                   <span
                     className={cn(
                       "inline-flex w-14 items-center justify-end gap-0.5 text-xs font-medium tabular-nums",
-                      rising ? "text-[#dc2626]" : "text-brand"
+                      rising ? "text-[var(--danger)]" : "text-brand"
                     )}
                   >
                     {rising ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
@@ -483,10 +483,10 @@ export default async function Home() {
             {recent.map((s) => {
               const dot =
                 s.sentiment === "positive"
-                  ? "#0a0a0a"
+                  ? "var(--foreground)"
                   : s.sentiment === "negative"
                     ? RED
-                    : "#d4d4d8";
+                    : "var(--track)";
               return (
                 <li
                   key={s.id}

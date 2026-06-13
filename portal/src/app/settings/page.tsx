@@ -12,6 +12,10 @@ import {
 } from "lucide-react";
 import { Card, CardLabel } from "@/components/ui/card";
 import { SettingsFeedbackForm } from "@/components/settings/feedback-form";
+import { StoreIntegrations } from "@/components/settings/store-integrations";
+import { getIntegrationStatus } from "@/lib/reviews/credentials";
+
+export const dynamic = "force-dynamic";
 
 const essentialFeatures = [
   {
@@ -58,12 +62,13 @@ const teamPrinciples = [
   "Every new section should explain the product implication, not just show raw data.",
 ];
 
-export default function Page() {
+export default async function Page() {
+  const integrations = await getIntegrationStatus();
   return (
     <div>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-[rgba(3,103,252,0.08)] px-3 py-1.5 text-xs font-medium text-brand">
+          <div className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand/10 px-3 py-1.5 text-xs font-medium text-brand">
             <ShieldCheck size={14} />
             Portal operations
           </div>
@@ -84,6 +89,8 @@ export default function Page() {
           Email UI/UX team
         </a>
       </div>
+
+      <StoreIntegrations play={integrations.play} appStore={integrations.appStore} />
 
       <section className="mt-8">
         <CardLabel>Essential features</CardLabel>

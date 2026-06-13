@@ -6,10 +6,10 @@ function formatInline(text: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/`(.*?)`/g, '<code class="rounded bg-zinc-100 px-1 py-0.5 text-xs font-mono">$1</code>')
-    .replace(/🔴/g, '<span class="text-red-500">🔴</span>')
+    .replace(/`(.*?)`/g, '<code class="rounded bg-elevated px-1 py-0.5 text-xs font-mono">$1</code>')
+    .replace(/🔴/g, '<span class="text-danger">🔴</span>')
     .replace(/🟡/g, '<span class="text-yellow-500">🟡</span>')
-    .replace(/🟢/g, '<span class="text-green-500">🟢</span>');
+    .replace(/🟢/g, '<span class="text-success">🟢</span>');
 }
 
 /**

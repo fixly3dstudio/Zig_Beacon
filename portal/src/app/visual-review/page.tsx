@@ -7,7 +7,7 @@ export default function VisualReviewPage() {
   return (
     <div>
       <div className="mb-8">
-        <div className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-[rgba(3,103,252,0.08)] px-3 py-1.5 text-xs font-medium text-brand">
+        <div className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand/10 px-3 py-1.5 text-xs font-medium text-brand">
           <GraduationCap size={14} />
           Learn from any screen
         </div>

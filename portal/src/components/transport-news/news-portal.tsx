@@ -114,7 +114,7 @@ export function TransportNewsPortal() {
     <div>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-[rgba(3,103,252,0.08)] px-3 py-1.5 text-xs font-medium text-brand">
+          <div className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand/10 px-3 py-1.5 text-xs font-medium text-brand">
             <Newspaper size={14} />
             Daily mobility news portal
           </div>
@@ -174,11 +174,11 @@ export function TransportNewsPortal() {
       </div>
 
       {error && (
-        <div className="mt-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="mt-5 flex items-start gap-3 rounded-xl border border-danger/30 bg-danger/10 p-4 text-sm text-danger">
           <AlertCircle size={18} className="mt-0.5 shrink-0" />
           <div>
             <p className="font-medium">Could not refresh the news feeds.</p>
-            <p className="mt-1 text-red-600">{error}</p>
+            <p className="mt-1 text-danger">{error}</p>
           </div>
         </div>
       )}
@@ -222,7 +222,7 @@ export function TransportNewsPortal() {
                       <span className="truncate font-medium text-foreground">
                         {item.source}
                       </span>
-                      <span className="h-1 w-1 shrink-0 rounded-full bg-zinc-300" />
+                      <span className="h-1 w-1 shrink-0 rounded-full bg-track" />
                       <span className="shrink-0">{freshnessLabel(item.publishedAt)}</span>
                     </div>
                     <ArrowUpRight
@@ -242,7 +242,7 @@ export function TransportNewsPortal() {
                     {item.topics.slice(0, 3).map((itemTopic) => (
                       <span
                         key={itemTopic}
-                        className="rounded-full bg-zinc-100 px-2 py-1 text-[11px] font-medium text-muted"
+                        className="rounded-full bg-elevated px-2 py-1 text-[11px] font-medium text-muted"
                       >
                         {itemTopic}
                       </span>

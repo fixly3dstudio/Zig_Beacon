@@ -135,8 +135,8 @@ export function VisualAnalyzer() {
           className={cn(
             "relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-10 transition-colors",
             isDragOver
-              ? "border-brand bg-[rgba(3,103,252,0.06)]"
-              : "border-border bg-surface hover:border-brand/40 hover:bg-[rgba(3,103,252,0.03)]"
+              ? "border-brand bg-brand/10"
+              : "border-border bg-surface hover:border-brand/40 hover:bg-brand/5"
           )}
         >
           <input
@@ -149,7 +149,7 @@ export function VisualAnalyzer() {
           />
           <div className={cn(
             "flex h-12 w-12 items-center justify-center rounded-2xl transition-colors",
-            isDragOver ? "bg-brand/10" : "bg-zinc-100"
+            isDragOver ? "bg-brand/10" : "bg-elevated"
           )}>
             <Upload size={22} className={isDragOver ? "text-brand" : "text-muted"} />
           </div>
@@ -289,7 +289,7 @@ export function VisualAnalyzer() {
             Beacon analysis
           </p>
           {state === "done" && (
-            <div className="flex items-center gap-1.5 text-xs font-medium text-green-600">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-success">
               <CheckCircle2 size={13} />
               Complete
             </div>
@@ -312,7 +312,7 @@ export function VisualAnalyzer() {
         >
           {state === "idle" && (
             <div className="space-y-3">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-elevated">
                 <Sparkles size={24} className="text-muted" />
               </div>
               <p className="text-sm font-medium text-foreground">
@@ -326,12 +326,12 @@ export function VisualAnalyzer() {
           )}
 
           {state === "error" && (
-            <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm">
-              <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-500" />
+            <div className="flex items-start gap-3 rounded-xl border border-danger/30 bg-danger/10 p-4 text-sm">
+              <AlertCircle size={18} className="mt-0.5 shrink-0 text-danger" />
               <div>
-                <p className="font-medium text-red-700">Analysis failed</p>
-                <p className="mt-1 leading-5 text-red-600">{error}</p>
-                <p className="mt-3 text-xs text-red-500">
+                <p className="font-medium text-danger">Analysis failed</p>
+                <p className="mt-1 leading-5 text-danger">{error}</p>
+                <p className="mt-3 text-xs text-danger">
                   Make sure Ollama is running: <code className="font-mono">ollama serve</code> and the
                   vision model is pulled: <code className="font-mono">ollama pull qwen2.5vl:3b</code>
                 </p>

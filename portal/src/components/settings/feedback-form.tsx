@@ -215,9 +215,9 @@ export function SettingsFeedbackForm() {
         <div
           className={cn(
             "mt-4 flex items-start gap-3 rounded-xl border p-4 text-sm",
-            state === "sent" && "border-green-200 bg-green-50 text-green-700",
-            state === "fallback" && "border-amber-200 bg-amber-50 text-amber-800",
-            state === "error" && "border-red-200 bg-red-50 text-red-700"
+            state === "sent" && "border-success/30 bg-success/10 text-success",
+            state === "fallback" && "border-warn/30 bg-warn/10 text-warn",
+            state === "error" && "border-danger/30 bg-danger/10 text-danger"
           )}
         >
           {state === "sent" ? (

@@ -169,15 +169,15 @@ const averageMomentum = Math.round(
 );
 
 function regulationClass(regulation: Market["regulation"]) {
-  if (regulation === "Open") return "border-zinc-300 bg-background text-foreground";
-  if (regulation === "Managed") return "border-brand/20 bg-[rgba(3,103,252,0.08)] text-brand";
-  return "border-zinc-200 bg-zinc-100 text-muted";
+  if (regulation === "Open") return "border-track bg-background text-foreground";
+  if (regulation === "Managed") return "border-brand/20 bg-brand/10 text-brand";
+  return "border-track bg-elevated text-muted";
 }
 
 function maturityDot(maturity: Market["maturity"]) {
   if (maturity === "Leader") return "bg-foreground";
   if (maturity === "Scaling") return "bg-brand";
-  return "bg-zinc-300";
+  return "bg-track";
 }
 
 function Bar({
@@ -188,7 +188,7 @@ function Bar({
   color?: string;
 }) {
   return (
-    <div className="h-1.5 overflow-hidden rounded-full bg-zinc-200">
+    <div className="h-1.5 overflow-hidden rounded-full bg-track">
       <div
         className={cn("h-full rounded-full", color)}
         style={{ width: `${value}%` }}
@@ -324,7 +324,7 @@ export default function Page() {
                     <p className="mt-1 text-sm font-medium tabular-nums text-foreground">
                       {market.airportReadiness}
                     </p>
-                    <Bar value={market.airportReadiness} color="bg-zinc-400" />
+                    <Bar value={market.airportReadiness} color="bg-muted" />
                   </div>
                 </div>
               </div>
@@ -390,7 +390,7 @@ export default function Page() {
                 Scaling
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-zinc-300" />
+                <span className="h-2 w-2 rounded-full bg-track" />
                 Emerging
               </span>
             </div>

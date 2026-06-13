@@ -17,7 +17,7 @@ export function Sparkline({
   values,
   width = 96,
   height = 28,
-  color = "#0a0a0a",
+  color = "var(--foreground)",
   strokeWidth = 1.5,
   delay = 0,
   fill = false,

@@ -1,12 +1,13 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, type LucideIcon } from "lucide-react";
 import { navGroups, settingsItem, isItemActive } from "./nav-config";
+import { useMobileNavOpen, closeMobileNav } from "./mobile-nav-store";
 
 interface NavLinkProps {
   item: { href: string; name: string; icon: LucideIcon };
@@ -20,6 +21,7 @@ function NavLink({ item, active, collapsed }: NavLinkProps) {
     <Link
       href={item.href}
       title={collapsed ? item.name : undefined}
+      onClick={closeMobileNav}
       className={`relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
         collapsed ? "justify-center" : ""
       } ${
@@ -64,6 +66,12 @@ export function Sidebar() {
   // Server snapshot is always "expanded"; localStorage is read once the client
   // hydrates, without a setState-in-effect cascade.
   const collapsed = useSyncExternalStore(subscribeToCollapse, readCollapsed, () => false);
+  const mobileOpen = useMobileNavOpen();
+
+  // Close the mobile drawer whenever the route changes.
+  useEffect(() => {
+    closeMobileNav();
+  }, [pathname]);
 
   const toggle = () => {
     localStorage.setItem(STORAGE_KEY, String(!collapsed));
@@ -71,43 +79,63 @@ export function Sidebar() {
   };
 
   return (
-    <aside
-      className="relative flex h-full flex-col border-r border-border bg-background shrink-0 transition-[width] duration-200 ease-out"
-      style={{ width: collapsed ? 64 : 256 }}
-    >
-      {/* Brand header */}
-      <div className="flex h-14 items-center gap-2.5 px-4 border-b border-border">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[6px] border border-white bg-background">
-          <Image
-            src="/zig-logo.png"
-            alt="Zig"
-            width={36}
-            height={36}
-            className="h-full w-full object-cover"
-            priority
-          />
-        </div>
-        {!collapsed && (
-          <div className="flex items-center gap-2 overflow-hidden">
-            <span className="text-sm font-normal tracking-tight whitespace-nowrap">
-              Zig <span className="font-semibold">Beacon</span>
-            </span>
-            <span className="rounded border border-border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted">
-              Internal
-            </span>
-          </div>
-        )}
-      </div>
+    <>
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          aria-hidden="true"
+          onClick={closeMobileNav}
+          className="fixed inset-0 z-40 bg-foreground/30 backdrop-blur-[2px] lg:hidden"
+        />
+      )}
 
-      {/* Collapse button */}
-      <button
-        onClick={toggle}
-        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className="absolute -right-3 top-16 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background text-muted hover:text-foreground hover:bg-surface transition-colors"
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex h-full flex-col border-r border-border bg-background shrink-0 transition-transform duration-200 ease-out max-lg:!w-64 lg:static lg:z-auto lg:translate-x-0 lg:transition-[width] ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+        style={{ width: collapsed ? 64 : 256 }}
       >
-        {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-      </button>
+        {/* Brand header */}
+        <div className="flex h-14 items-center gap-2.5 px-4 border-b border-border">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[6px] border border-white bg-background">
+            <Image
+              src="/zig-logo.png"
+              alt="Zig"
+              width={36}
+              height={36}
+              className="h-full w-full object-cover"
+              priority
+            />
+          </div>
+          {!collapsed && (
+            <div className="flex items-center gap-2 overflow-hidden">
+              <span className="text-sm font-normal tracking-tight whitespace-nowrap">
+                Zig <span className="font-semibold">Beacon</span>
+              </span>
+              <span className="rounded border border-border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted">
+                Internal
+              </span>
+            </div>
+          )}
+          {/* Mobile close button */}
+          <button
+            onClick={closeMobileNav}
+            aria-label="Close navigation"
+            className="ml-auto grid h-8 w-8 place-items-center rounded-lg text-muted hover:bg-surface hover:text-foreground lg:hidden"
+          >
+            <X size={17} />
+          </button>
+        </div>
+
+        {/* Collapse button (desktop only) */}
+        <button
+          onClick={toggle}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="absolute -right-3 top-16 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-border bg-background text-muted hover:text-foreground hover:bg-surface transition-colors lg:flex"
+        >
+          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+        </button>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-4">
@@ -137,14 +165,15 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Bottom */}
-      <div className="mt-auto border-t border-border px-3 py-3">
-        <NavLink
-          item={settingsItem}
-          active={isItemActive(settingsItem.href, pathname)}
-          collapsed={collapsed}
-        />
-      </div>
-    </aside>
+        {/* Bottom */}
+        <div className="mt-auto border-t border-border px-3 py-3">
+          <NavLink
+            item={settingsItem}
+            active={isItemActive(settingsItem.href, pathname)}
+            collapsed={collapsed}
+          />
+        </div>
+      </aside>
+    </>
   );
 }

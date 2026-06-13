@@ -40,17 +40,17 @@ function healthLabel(score: number) {
 }
 
 function healthClass(score: number) {
-  if (score >= 85) return "text-brand bg-[rgba(3,103,252,0.08)]";
-  if (score >= 70) return "text-foreground bg-zinc-100";
-  if (score >= 55) return "text-[#92400e] bg-[rgba(245,158,11,0.16)]";
-  return "text-[#dc2626] bg-[rgba(220,38,38,0.08)]";
+  if (score >= 85) return "text-brand bg-brand/10";
+  if (score >= 70) return "text-foreground bg-elevated";
+  if (score >= 55) return "text-[var(--warn)] bg-warn/15";
+  return "text-[var(--danger)] bg-danger/10";
 }
 
 function barColor(score: number) {
   if (score >= 85) return "bg-brand";
   if (score >= 70) return "bg-foreground";
-  if (score >= 55) return "bg-[#f59e0b]";
-  return "bg-[#dc2626]";
+  if (score >= 55) return "bg-[var(--warn)]";
+  return "bg-[var(--danger)]";
 }
 
 function severityWeight(severity?: string) {
@@ -62,7 +62,7 @@ function severityWeight(severity?: string) {
 
 function Bar({ value, color }: { value: number; color: string }) {
   return (
-    <div className="h-1.5 overflow-hidden rounded-full bg-zinc-200">
+    <div className="h-1.5 overflow-hidden rounded-full bg-track">
       <div
         className={cn("h-full rounded-full", color)}
         style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
@@ -229,7 +229,7 @@ export default async function Page() {
         </Card>
         <Card className="p-5">
           <CardLabel>Areas at risk</CardLabel>
-          <p className="mt-3 text-3xl font-semibold tracking-tight text-[#dc2626] tabular-nums">
+          <p className="mt-3 text-3xl font-semibold tracking-tight text-[var(--danger)] tabular-nums">
             {atRisk}
           </p>
           <p className="mt-1 text-xs text-muted">Health score below 70</p>
@@ -299,7 +299,7 @@ export default async function Page() {
                     <span
                       className={cn(
                         "inline-flex items-center gap-1 text-xs font-medium tabular-nums",
-                        deltaPositive ? "text-brand" : "text-[#dc2626]"
+                        deltaPositive ? "text-brand" : "text-[var(--danger)]"
                       )}
                     >
                       {deltaPositive ? (
@@ -414,7 +414,7 @@ export default async function Page() {
                         </span>
                       </td>
                       <td className="px-4 py-4">
-                        <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-foreground">
+                        <span className="inline-flex rounded-full bg-elevated px-2.5 py-1 text-xs font-medium text-foreground">
                           {area.health < 60
                             ? "Fix now"
                             : area.opportunities.length > 0

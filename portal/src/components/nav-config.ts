@@ -3,7 +3,6 @@ import {
   Swords,
   Globe2,
   Lightbulb,
-  MessageSquareText,
   Newspaper,
   Flame,
   HeartPulse,
@@ -11,6 +10,7 @@ import {
   Target,
   Sparkles,
   ScanEye,
+  Star,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -40,7 +40,7 @@ export const navGroups: NavGroup[] = [
   {
     label: "Customers",
     items: [
-      { name: "Customer Signals", href: "/signals", icon: MessageSquareText },
+      { name: "App Reviews", href: "/reviews", icon: Star },
       { name: "Complaints", href: "/complaint-heatmap", icon: Flame },
     ],
   },

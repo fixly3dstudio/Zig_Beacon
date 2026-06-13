@@ -390,6 +390,40 @@ async function main() {
     await prisma.signal.create({ data: s });
   }
 
+  // ─── Demo app reviews (shown until real store credentials are added) ──────────
+  const reviewTemplates = [
+    { store: "Play Store", rating: 1, title: null, author: "shakilalee", appVersion: "7.0.10", category: "Payments", body: "Terrible if u use debit card. They put a hold on your money and don't release it until the bank limit expires, around 10 days. You always need twice the fare ready." },
+    { store: "App Store", rating: 2, title: "Promo never applies", author: "raffles_rider", appVersion: "7.0.9", category: "Promotions", body: "Promo codes exist but you have to enter them manually every time. Grab auto-applies the best one. Small thing but annoying." },
+    { store: "Play Store", rating: 5, title: null, author: "tanwl", appVersion: "7.0.10", category: "Booking", body: "Booking is smooth and the metered taxis make me trust the fare on longer rides. Drivers are usually quick to accept." },
+    { store: "App Store", rating: 2, title: "Airport pickup is confusing", author: "changi_flyer", appVersion: "7.0.9", category: "Airport", body: "Used Zig from Changi. It worked but I had to message the driver to confirm the terminal. Grab knew my terminal from the flight number." },
+    { store: "Play Store", rating: 4, title: null, author: "dailycommuter", appVersion: "7.0.10", category: "Booking", body: "Reliable for my daily commute. Wish there were more vehicle options at peak hours but overall solid." },
+    { store: "App Store", rating: 1, title: "App keeps crashing", author: "frustrated_sg", appVersion: "7.0.8", category: "Technical", body: "Since the last update the app crashes when I open the map. Had to reinstall twice this week." },
+    { store: "Play Store", rating: 3, title: null, author: "corporateuser", appVersion: "7.0.10", category: "Account", body: "Company switched us to Zig for corporate rides. Login with SSO took a few tries but works now. Receipts could be clearer." },
+    { store: "App Store", rating: 5, title: "Advance booking is great", author: "earlybird", appVersion: "7.0.10", category: "Booking", body: "The advance booking feature is a lifesaver for early morning airport runs. Driver was already waiting." },
+    { store: "Play Store", rating: 2, title: null, author: "pointscollector", appVersion: "7.0.9", category: "Promotions", body: "My reward points expired without any warning. Would be nice to get a reminder before they vanish." },
+    { store: "App Store", rating: 4, title: "Safety features are good", author: "safe_traveller", appVersion: "7.0.10", category: "Booking", body: "Real-time ride sharing and the SOS button give me peace of mind on late night rides. Booking flow is clean." },
+    { store: "Play Store", rating: 1, title: null, author: "angrypax", appVersion: "7.0.8", category: "Booking", body: "Driver cancelled twice before pickup and I still got charged a small fee. Support took two days to refund." },
+    { store: "App Store", rating: 3, title: "Payment flow too long", author: "quickpay_fan", appVersion: "7.0.9", category: "Payments", body: "Saved cards work but adding a new one has too many steps. Checkout could be one tap." },
+  ];
+
+  for (const [i, r] of reviewTemplates.entries()) {
+    const sentiment = r.rating <= 2 ? "negative" : r.rating === 3 ? "neutral" : "positive";
+    await prisma.signal.create({
+      data: {
+        source: r.store,
+        category: r.category,
+        sentiment,
+        text: r.title ? `${r.title} — ${r.body}` : r.body,
+        title: r.title,
+        rating: r.rating,
+        author: r.author,
+        appVersion: r.appVersion,
+        externalId: `demo_${r.store === "App Store" ? "as" : "gp"}_${i}`,
+        createdAt: new Date(Date.now() - i * 2 * 24 * 60 * 60 * 1000),
+      },
+    });
+  }
+
   console.log("Seed complete.");
   console.log(`  ${competitors.length} competitors`);
   console.log(`  ${features.length} features`);
@@ -398,6 +432,7 @@ async function main() {
   console.log(`  ${scoreData.length * 2} beacon score rows`);
   console.log(`  8 opportunities`);
   console.log(`  ${signals.length} signals`);
+  console.log(`  ${reviewTemplates.length} demo app reviews`);
 }
 
 main()

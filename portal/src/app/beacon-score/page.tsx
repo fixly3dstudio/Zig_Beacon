@@ -83,30 +83,30 @@ function scoreBand(score: number) {
 }
 
 function scoreClass(score: number) {
-  if (score >= 85) return "text-brand bg-[rgba(3,103,252,0.08)]";
-  if (score >= 75) return "text-foreground bg-zinc-100";
-  if (score >= 65) return "text-foreground bg-zinc-100";
-  if (score >= 50) return "text-[#92400e] bg-[rgba(245,158,11,0.16)]";
-  return "text-[#dc2626] bg-[rgba(220,38,38,0.08)]";
+  if (score >= 85) return "text-brand bg-brand/10";
+  if (score >= 75) return "text-foreground bg-elevated";
+  if (score >= 65) return "text-foreground bg-elevated";
+  if (score >= 50) return "text-[var(--warn)] bg-warn/15";
+  return "text-[var(--danger)] bg-danger/10";
 }
 
 function barColor(score: number) {
   if (score >= 85) return "bg-brand";
   if (score >= 70) return "bg-foreground";
-  if (score >= 50) return "bg-[#f59e0b]";
-  return "bg-[#dc2626]";
+  if (score >= 50) return "bg-[var(--warn)]";
+  return "bg-[var(--danger)]";
 }
 
 function factorColor(value: number) {
   if (value >= 85) return "bg-brand";
   if (value >= 70) return "bg-foreground";
-  if (value >= 50) return "bg-[#f59e0b]";
-  return "bg-[#dc2626]";
+  if (value >= 50) return "bg-[var(--warn)]";
+  return "bg-[var(--danger)]";
 }
 
 function Bar({ value, color }: { value: number; color: string }) {
   return (
-    <div className="h-1.5 overflow-hidden rounded-full bg-zinc-200">
+    <div className="h-1.5 overflow-hidden rounded-full bg-track">
       <div
         className={cn("h-full rounded-full", color)}
         style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
@@ -214,8 +214,8 @@ export default async function Page() {
               className={cn(
                 "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium tabular-nums",
                 overallDelta >= 0
-                  ? "bg-[rgba(3,103,252,0.08)] text-brand"
-                  : "bg-[rgba(220,38,38,0.08)] text-[#dc2626]"
+                  ? "bg-brand/10 text-brand"
+                  : "bg-danger/10 text-[var(--danger)]"
               )}
             >
               {overallDelta >= 0 ? (
@@ -242,7 +242,7 @@ export default async function Page() {
         </Card>
         <Card className="p-5">
           <CardLabel>Watch areas</CardLabel>
-          <p className="mt-3 text-3xl font-semibold tracking-tight text-[#dc2626] tabular-nums">
+          <p className="mt-3 text-3xl font-semibold tracking-tight text-[var(--danger)] tabular-nums">
             {watchCount}
           </p>
           <p className="mt-1 text-xs text-muted">Areas scoring below 70</p>
@@ -304,7 +304,7 @@ export default async function Page() {
                       <span
                         className={cn(
                           "mb-1 inline-flex items-center gap-1 text-xs font-medium tabular-nums",
-                          deltaPositive ? "text-brand" : "text-[#dc2626]"
+                          deltaPositive ? "text-brand" : "text-[var(--danger)]"
                         )}
                       >
                         {deltaPositive ? (
@@ -339,7 +339,7 @@ export default async function Page() {
                                 className={cn(
                                   factorDelta >= 0
                                     ? "text-brand"
-                                    : "text-[#dc2626]"
+                                    : "text-[var(--danger)]"
                                 )}
                               >
                                 {factorDelta >= 0 ? "+" : ""}
@@ -357,7 +357,7 @@ export default async function Page() {
                     <div className="mt-4 rounded-md border border-border bg-background p-3">
                       <div className="flex items-start gap-3">
                         <ShieldAlert
-                          className="mt-0.5 text-[#dc2626]"
+                          className="mt-0.5 text-[var(--danger)]"
                           size={16}
                         />
                         <div>
@@ -433,7 +433,7 @@ export default async function Page() {
                         {band}
                       </span>
                       <div className="flex flex-1 items-center gap-3">
-                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-200">
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-track">
                           <div
                             className="h-full rounded-full bg-brand"
                             style={{
@@ -480,7 +480,7 @@ export default async function Page() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <ShieldAlert className="mt-0.5 text-[#dc2626]" size={17} />
+                <ShieldAlert className="mt-0.5 text-[var(--danger)]" size={17} />
                 <div>
                   <p className="text-sm font-semibold text-foreground">
                     Complaint pressure remains material

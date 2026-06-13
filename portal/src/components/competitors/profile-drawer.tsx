@@ -51,12 +51,12 @@ const statusDisplay: Record<
   partial: {
     label: "Partial",
     mark: "◐",
-    className: "bg-zinc-100 text-zinc-600 border-zinc-200",
+    className: "bg-elevated text-muted border-track",
   },
   none: {
     label: "None",
     mark: "—",
-    className: "bg-transparent text-zinc-300 border-zinc-200",
+    className: "bg-transparent text-track border-track",
   },
 };
 
@@ -272,8 +272,8 @@ function FeatureExplanationCard({
               className={cn(
                 "rounded-full px-2.5 py-1 text-xs font-medium",
                 zig?.cell.status === "available" && "bg-foreground text-background",
-                zig?.cell.status === "partial" && "bg-zinc-100 text-foreground",
-                (!zig || zig.cell.status === "none") && "bg-red-50 text-red-700"
+                zig?.cell.status === "partial" && "bg-elevated text-foreground",
+                (!zig || zig.cell.status === "none") && "bg-danger/10 text-danger"
               )}
             >
               {statusDisplay[zig?.cell.status ?? "none"]?.label ?? "None"}
@@ -397,7 +397,7 @@ function ProfileDrawer({
                     <p>{competitor.availability.none} absent</p>
                   </div>
                 </div>
-                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-zinc-200">
+                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-track">
                   <div
                     className="h-full rounded-full bg-brand"
                     style={{ width: `${coverage}%` }}
@@ -492,7 +492,7 @@ export function CompetitorMatrix({
                     <th
                       className={cn(
                         "min-w-[132px] px-3 py-3 text-center",
-                        isZig && "bg-[rgba(3,103,252,0.08)]"
+                        isZig && "bg-brand/10"
                       )}
                       key={competitor.id}
                     >
@@ -551,7 +551,7 @@ export function CompetitorMatrix({
                             className={cn(
                               "px-3 py-4 text-center",
                               competitor.name === "Zig" &&
-                                "bg-[rgba(3,103,252,0.035)]"
+                                "bg-brand/5"
                             )}
                             key={`${feature.id}-${competitor.id}`}
                           >

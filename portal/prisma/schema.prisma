@@ -63,12 +63,27 @@ model Opportunity {
 }
 
 model Signal {
-  id        Int      @id @default(autoincrement())
-  source    String
-  category  String
-  sentiment String   // positive | neutral | negative
-  text      String
-  createdAt DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  source     String
+  category   String
+  sentiment  String   // positive | neutral | negative
+  text       String
+  createdAt  DateTime @default(now())
+  // App-store review fields (null for non-review signals)
+  externalId String?  @unique // store review id, used for dedup on sync
+  rating     Int? // 1-5 stars
+  appVersion String?
+  author     String?
+  title      String?
+}
+
+model StoreIntegration {
+  store        String    @id // "play" | "appstore"
+  config       String    // AES-256-GCM encrypted JSON of credentials
+  connected    Boolean   @default(false)
+  lastSyncedAt DateTime?
+  lastStatus   String?
+  updatedAt    DateTime  @updatedAt
 }
 
 model ChatMessage {

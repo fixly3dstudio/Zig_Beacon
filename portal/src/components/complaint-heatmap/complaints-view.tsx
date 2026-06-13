@@ -41,8 +41,8 @@ type ComplaintsViewProps = {
   sources: string[];
 };
 
-const RED = "#dc2626";
-const AMBER = "#f59e0b";
+const RED = "var(--danger)";
+const AMBER = "var(--warn)";
 
 const sourceIcons: Record<string, LucideIcon> = {
   "App Store": Smartphone,
@@ -55,7 +55,7 @@ const sourceIcons: Record<string, LucideIcon> = {
 function severityColor(severity: string) {
   if (severity === "high") return RED;
   if (severity === "medium") return AMBER;
-  return "#a1a1aa";
+  return "var(--muted)";
 }
 
 function ageLabel(value: string) {
@@ -192,14 +192,14 @@ export function ComplaintsView({
                       transition={{ delay: Math.min(i * 0.03, 0.3), duration: 0.2 }}
                       className={cn(
                         "rounded-xl border bg-background p-5",
-                        negative ? "border-red-100" : "border-border"
+                        negative ? "border-danger/20" : "border-border"
                       )}
                     >
                       <div className="flex items-center gap-2.5">
                         <span
                           className={cn(
                             "flex h-7 w-7 items-center justify-center rounded-full",
-                            negative ? "bg-red-50 text-[#dc2626]" : "bg-surface text-muted"
+                            negative ? "bg-danger/10 text-[var(--danger)]" : "bg-surface text-muted"
                           )}
                         >
                           <Icon size={14} />
@@ -221,8 +221,8 @@ export function ComplaintsView({
                           className={cn(
                             "inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium capitalize",
                             negative
-                              ? "bg-[rgba(220,38,38,0.08)] text-[#dc2626]"
-                              : "bg-zinc-100 text-muted"
+                              ? "bg-danger/10 text-[var(--danger)]"
+                              : "bg-elevated text-muted"
                           )}
                         >
                           {signal.sentiment}
@@ -271,7 +271,7 @@ export function ComplaintsView({
                             <span
                               className={cn(
                                 "inline-flex shrink-0 items-center gap-0.5 text-xs font-medium tabular-nums",
-                                rising ? "text-[#dc2626]" : "text-brand"
+                                rising ? "text-[var(--danger)]" : "text-brand"
                               )}
                             >
                               {rising ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
@@ -280,7 +280,7 @@ export function ComplaintsView({
                             </span>
                           </div>
                           <div className="mt-2 flex items-center gap-3 pl-[18px]">
-                            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100">
+                            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-elevated">
                               <div
                                 className="h-full rounded-full bg-foreground"
                                 style={{ width: `${(c.volume / maxClusterVolume) * 100}%` }}
@@ -318,7 +318,7 @@ export function ComplaintsView({
                     <span
                       className={cn(
                         "inline-flex items-center gap-0.5 text-xs font-medium tabular-nums",
-                        groupRising ? "text-[#dc2626]" : "text-brand"
+                        groupRising ? "text-[var(--danger)]" : "text-brand"
                       )}
                     >
                       {groupRising ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
@@ -326,7 +326,7 @@ export function ComplaintsView({
                       {group.trend}% overall
                     </span>
                     {group.high > 0 && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(220,38,38,0.08)] px-2 py-0.5 text-[11px] font-medium text-[#dc2626]">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-danger/10 px-2 py-0.5 text-[11px] font-medium text-[var(--danger)]">
                         {group.high} high severity
                       </span>
                     )}
@@ -337,7 +337,7 @@ export function ComplaintsView({
                   </div>
 
                   {/* Share-of-total bar */}
-                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-100">
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-elevated">
                     <div
                       className="h-full rounded-full bg-foreground"
                       style={{ width: `${(group.volume / maxGroupVolume) * 100}%` }}
@@ -366,7 +366,7 @@ export function ComplaintsView({
                           <span
                             className={cn(
                               "inline-flex w-14 items-center justify-end gap-0.5 text-xs font-medium tabular-nums",
-                              rising ? "text-[#dc2626]" : "text-brand"
+                              rising ? "text-[var(--danger)]" : "text-brand"
                             )}
                           >
                             {rising ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}

@@ -16,9 +16,9 @@ const W = 100; // viewBox units, rendered responsively
 const H = 100;
 
 function statusColor(status: string) {
-  if (status === "in-progress") return "#0367fc";
-  if (status === "planned") return "#0a0a0a";
-  return "#a1a1aa"; // backlog / other
+  if (status === "in-progress") return "var(--brand)";
+  if (status === "planned") return "var(--foreground)";
+  return "var(--muted)"; // backlog / other
 }
 
 export function ImpactEffortMatrix({ opportunities }: { opportunities: MatrixOpportunity[] }) {
@@ -31,15 +31,15 @@ export function ImpactEffortMatrix({ opportunities }: { opportunities: MatrixOpp
           {/* quadrant background */}
           <rect x="0" y="0" width={W / 2} height={H / 2} fill="rgba(3,103,252,0.04)" />
           {/* grid */}
-          <line x1={W / 2} y1="0" x2={W / 2} y2={H} stroke="#e4e4e7" strokeWidth="0.4" />
-          <line x1="0" y1={H / 2} x2={W} y2={H / 2} stroke="#e4e4e7" strokeWidth="0.4" />
-          <rect x="0.2" y="0.2" width={W - 0.4} height={H - 0.4} fill="none" stroke="#e4e4e7" strokeWidth="0.4" rx="2" />
+          <line x1={W / 2} y1="0" x2={W / 2} y2={H} stroke="var(--border)" strokeWidth="0.4" />
+          <line x1="0" y1={H / 2} x2={W} y2={H / 2} stroke="var(--border)" strokeWidth="0.4" />
+          <rect x="0.2" y="0.2" width={W - 0.4} height={H - 0.4} fill="none" stroke="var(--border)" strokeWidth="0.4" rx="2" />
 
           {/* quadrant labels */}
-          <text x="3" y="6" fontSize="3.4" fill="#0367fc" fontWeight="600">QUICK WINS</text>
-          <text x={W / 2 + 3} y="6" fontSize="3.4" fill="#a1a1aa" fontWeight="600">BIG BETS</text>
-          <text x="3" y={H - 3} fontSize="3.4" fill="#a1a1aa" fontWeight="600">FILL-INS</text>
-          <text x={W / 2 + 3} y={H - 3} fontSize="3.4" fill="#a1a1aa" fontWeight="600">RECONSIDER</text>
+          <text x="3" y="6" fontSize="3.4" fill="var(--brand)" fontWeight="600">QUICK WINS</text>
+          <text x={W / 2 + 3} y="6" fontSize="3.4" fill="var(--muted)" fontWeight="600">BIG BETS</text>
+          <text x="3" y={H - 3} fontSize="3.4" fill="var(--muted)" fontWeight="600">FILL-INS</text>
+          <text x={W / 2 + 3} y={H - 3} fontSize="3.4" fill="var(--muted)" fontWeight="600">RECONSIDER</text>
 
           {opportunities.map((o, i) => {
             // effort 1–10 → x, impact 1–10 → y (high impact at top)
@@ -88,7 +88,7 @@ export function ImpactEffortMatrix({ opportunities }: { opportunities: MatrixOpp
             <span className="h-2 w-2 rounded-full bg-foreground" /> Planned
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-zinc-400" /> Backlog
+            <span className="h-2 w-2 rounded-full bg-muted" /> Backlog
           </span>
         </div>
         <span>High effort →</span>

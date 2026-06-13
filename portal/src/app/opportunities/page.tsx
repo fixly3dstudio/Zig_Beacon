@@ -51,28 +51,28 @@ function currency(value: number) {
 
 function statusClass(status: string) {
   if (status === "shipped") return "bg-foreground text-background";
-  if (status === "in-progress") return "bg-[rgba(3,103,252,0.08)] text-brand";
-  if (status === "planned") return "bg-zinc-100 text-foreground";
-  return "bg-zinc-100 text-muted";
+  if (status === "in-progress") return "bg-brand/10 text-brand";
+  if (status === "planned") return "bg-elevated text-foreground";
+  return "bg-elevated text-muted";
 }
 
 function roiClass(roi: number) {
-  if (roi >= 4) return "text-brand bg-[rgba(3,103,252,0.08)]";
-  if (roi >= 2) return "text-foreground bg-zinc-100";
-  if (roi >= 1) return "text-[#92400e] bg-[rgba(245,158,11,0.16)]";
-  return "text-[#dc2626] bg-[rgba(220,38,38,0.08)]";
+  if (roi >= 4) return "text-brand bg-brand/10";
+  if (roi >= 2) return "text-foreground bg-elevated";
+  if (roi >= 1) return "text-[var(--warn)] bg-warn/15";
+  return "text-[var(--danger)] bg-danger/10";
 }
 
 function barColor(value: number) {
   if (value >= 75) return "bg-brand";
   if (value >= 50) return "bg-foreground";
-  if (value >= 30) return "bg-[#f59e0b]";
-  return "bg-[#dc2626]";
+  if (value >= 30) return "bg-[var(--warn)]";
+  return "bg-[var(--danger)]";
 }
 
 function Bar({ value, color }: { value: number; color: string }) {
   return (
-    <div className="h-1.5 overflow-hidden rounded-full bg-zinc-200">
+    <div className="h-1.5 overflow-hidden rounded-full bg-track">
       <div
         className={cn("h-full rounded-full", color)}
         style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
@@ -362,7 +362,7 @@ export default async function Page() {
                         </span>
                       </td>
                       <td className="px-4 py-4">
-                        <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-foreground">
+                        <span className="inline-flex rounded-full bg-elevated px-2.5 py-1 text-xs font-medium text-foreground">
                           {opportunity.action}
                         </span>
                         <p className="mt-1 text-[11px] tabular-nums text-muted">
@@ -394,7 +394,7 @@ export default async function Page() {
                       {opportunity.owner ?? "Unassigned"} · {opportunity.status}
                     </p>
                   </div>
-                  <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[rgba(3,103,252,0.08)] px-2.5 py-1 text-xs font-medium text-brand">
+                  <span className="inline-flex w-fit items-center gap-1 rounded-full bg-brand/10 px-2.5 py-1 text-xs font-medium text-brand">
                     <ArrowUpRight size={14} />
                     {opportunity.roi.toFixed(1)}x ROI
                   </span>
