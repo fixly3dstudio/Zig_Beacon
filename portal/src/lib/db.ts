@@ -161,12 +161,97 @@ const demoComplaints = [
 ];
 
 const demoSignals = [
-  { id: 1, source: "App Store", category: "Promotions", sentiment: "negative", text: "Promo codes are hard to find and do not apply automatically.", createdAt: now },
-  { id: 2, source: "Google Play", category: "Airport", sentiment: "negative", text: "Airport pickup instructions are confusing after landing.", createdAt: now },
-  { id: 3, source: "Support", category: "Booking", sentiment: "neutral", text: "Customer asked why cancellation fee changed.", createdAt: now },
-  { id: 4, source: "App Store", category: "Safety", sentiment: "positive", text: "Trip sharing and taxi trust make late rides feel safe.", createdAt: now },
-  { id: 5, source: "Social", category: "Payments", sentiment: "negative", text: "Refund credit is not visible enough in wallet.", createdAt: now },
-  { id: 6, source: "Support", category: "Booking", sentiment: "positive", text: "Advance booking worked well for airport trip.", createdAt: now },
+  {
+    id: 1,
+    source: "App Store",
+    category: "Promotions",
+    sentiment: "negative",
+    text: "Promo codes are hard to find and do not apply automatically.",
+    createdAt: now,
+    externalId: "demo_as_1",
+    rating: 2,
+    appVersion: "7.4.0",
+    author: "iOS rider",
+    title: "Promo did not apply",
+  },
+  {
+    id: 2,
+    source: "Play Store",
+    category: "Airport",
+    sentiment: "negative",
+    text: "Airport pickup instructions are confusing after landing.",
+    createdAt: now,
+    externalId: "demo_gp_1",
+    rating: 2,
+    appVersion: "7.4.0",
+    author: "Android rider",
+    title: "Could not find pickup point",
+  },
+  {
+    id: 3,
+    source: "Support",
+    category: "Booking",
+    sentiment: "neutral",
+    text: "Customer asked why cancellation fee changed.",
+    createdAt: now,
+    externalId: null,
+    rating: null,
+    appVersion: null,
+    author: null,
+    title: null,
+  },
+  {
+    id: 4,
+    source: "App Store",
+    category: "Safety",
+    sentiment: "positive",
+    text: "Trip sharing and taxi trust make late rides feel safe.",
+    createdAt: now,
+    externalId: "demo_as_2",
+    rating: 5,
+    appVersion: "7.3.9",
+    author: "Daily commuter",
+    title: "Reliable and safe",
+  },
+  {
+    id: 5,
+    source: "Twitter",
+    category: "Payments",
+    sentiment: "negative",
+    text: "Refund credit is not visible enough in wallet.",
+    createdAt: now,
+    externalId: null,
+    rating: null,
+    appVersion: null,
+    author: null,
+    title: null,
+  },
+  {
+    id: 6,
+    source: "Support",
+    category: "Booking",
+    sentiment: "positive",
+    text: "Advance booking worked well for airport trip.",
+    createdAt: now,
+    externalId: null,
+    rating: null,
+    appVersion: null,
+    author: null,
+    title: null,
+  },
+  {
+    id: 7,
+    source: "Play Store",
+    category: "Payments",
+    sentiment: "neutral",
+    text: "Payment went through, but the receipt took too long to appear.",
+    createdAt: new Date("2026-06-10T08:00:00.000Z"),
+    externalId: "demo_gp_2",
+    rating: 3,
+    appVersion: "7.3.8",
+    author: "Play reviewer",
+    title: "Receipt delay",
+  },
 ];
 
 const demoScores = [
@@ -222,6 +307,24 @@ function groupByRows<T extends Record<string, unknown>>(rows: T[], by: string[])
   }));
 }
 
+function matchesField(value: unknown, condition: unknown) {
+  if (condition && typeof condition === "object") {
+    const lookup = condition as Record<string, unknown>;
+    if (Array.isArray(lookup.in)) return lookup.in.includes(value);
+    if ("not" in lookup) return value !== lookup.not;
+  }
+  return value === condition;
+}
+
+function filterRows<T extends Record<string, unknown>>(rows: T[], where: unknown) {
+  if (!where || typeof where !== "object") return rows;
+  return rows.filter((row) =>
+    Object.entries(where as Record<string, unknown>).every(([key, condition]) =>
+      matchesField(row[key], condition)
+    )
+  );
+}
+
 function createDemoClient() {
   return {
     competitor: {
@@ -257,9 +360,16 @@ function createDemoClient() {
         takeRows(sortRows(demoComplaints, args?.orderBy), args?.take),
     },
     signal: {
-      findMany: async (args?: { orderBy?: unknown; take?: number }) =>
-        takeRows(sortRows(demoSignals, args?.orderBy), args?.take),
+      findMany: async (args?: { where?: unknown; orderBy?: unknown; take?: number }) =>
+        takeRows(sortRows(filterRows(demoSignals, args?.where), args?.orderBy), args?.take),
       groupBy: async (args: { by: string[] }) => groupByRows(demoSignals, args.by),
+    },
+    storeIntegration: {
+      findMany: async () => [],
+      findUnique: async () => null,
+      upsert: async () => null,
+      update: async () => null,
+      delete: async () => null,
     },
     beaconScore: {
       findMany: async (args?: { orderBy?: unknown }) =>
