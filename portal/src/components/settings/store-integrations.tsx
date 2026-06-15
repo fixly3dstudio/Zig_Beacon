@@ -9,6 +9,7 @@ import {
   Loader2,
   Play,
   Plug,
+  Save,
   ShieldCheck,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -187,6 +188,7 @@ export function StoreIntegrations({ play, appStore }: Props) {
   const [issuerId, setIssuerId] = useState("");
   const [p8, setP8] = useState("");
   const [appPending, startApp] = useTransition();
+  const [appSavePending, startAppSave] = useTransition();
   const [appResult, setAppResult] = useState<ActionResult | null>(null);
 
   useEffect(() => {
@@ -210,6 +212,37 @@ export function StoreIntegrations({ play, appStore }: Props) {
       });
     }
   }, []);
+
+  function currentAppStoreCreds() {
+    return {
+      appId: appId.trim(),
+      keyId: keyId.trim(),
+      issuerId: issuerId.trim(),
+      privateKey: p8.trim(),
+    };
+  }
+
+  function saveAppStoreToPortal(): ActionResult {
+    const creds = currentAppStoreCreds();
+    if (!creds.appId || !creds.keyId || !creds.issuerId || !creds.privateKey) {
+      return { ok: false, message: "All App Store Connect fields are required before saving." };
+    }
+
+    saveBrowserAppStoreCredentials(creds);
+    setAppStoreStatus({
+      connected: true,
+      source: "browser",
+      lastSyncedAt: null,
+      lastStatus: "Saved in this portal browser.",
+      hint: `App ID ${creds.appId}`,
+    });
+
+    return {
+      ok: true,
+      message:
+        "App Store Connect credentials saved in this portal. You can refresh or move pages and they will stay connected.",
+    };
+  }
 
   return (
     <section className="mt-6">
@@ -356,38 +389,48 @@ export function StoreIntegrations({ play, appStore }: Props) {
                   onChange={(e) => setP8(e.target.value)}
                 />
               </div>
-              <button
-                type="button"
-                disabled={appPending}
-                onClick={() =>
-                  startApp(async () =>
-                    {
-                      const creds = {
-                        appId: appId.trim(),
-                        keyId: keyId.trim(),
-                        issuerId: issuerId.trim(),
-                        privateKey: p8.trim(),
-                      };
-                      const result = await saveAppStoreIntegration(creds);
-                      if (result.ok) {
-                        saveBrowserAppStoreCredentials(creds);
-                        setAppStoreStatus({
-                          connected: true,
-                          source: "browser",
-                          lastSyncedAt: null,
-                          lastStatus: result.message,
-                          hint: `App ID ${creds.appId}`,
-                        });
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={appSavePending}
+                  onClick={() =>
+                    startAppSave(() => {
+                      setAppResult(saveAppStoreToPortal());
+                    })
+                  }
+                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-surface disabled:opacity-50"
+                >
+                  {appSavePending ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+                  Save credentials
+                </button>
+                <button
+                  type="button"
+                  disabled={appPending}
+                  onClick={() =>
+                    startApp(async () =>
+                      {
+                        const creds = currentAppStoreCreds();
+                        const result = await saveAppStoreIntegration(creds);
+                        if (result.ok) {
+                          saveBrowserAppStoreCredentials(creds);
+                          setAppStoreStatus({
+                            connected: true,
+                            source: "browser",
+                            lastSyncedAt: null,
+                            lastStatus: result.message,
+                            hint: `App ID ${creds.appId}`,
+                          });
+                        }
+                        setAppResult(result);
                       }
-                      setAppResult(result);
-                    }
-                  )
-                }
-                className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
-              >
-                {appPending ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
-                Connect &amp; verify
-              </button>
+                    )
+                  }
+                  className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  {appPending ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
+                  Connect &amp; verify
+                </button>
+              </div>
               <ResultLine result={appResult} />
             </div>
           )}
