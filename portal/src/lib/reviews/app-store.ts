@@ -31,6 +31,48 @@ type AscReview = {
   };
 };
 
+type PublicReviewEntry = {
+  id?: { label?: string };
+  title?: { label?: string };
+  content?: { label?: string };
+  author?: { name?: { label?: string } };
+  updated?: { label?: string };
+  "im:rating"?: { label?: string };
+  "im:version"?: { label?: string };
+};
+
+async function fetchPublicAppStoreReviews(appId: string): Promise<NormalizedReview[]> {
+  const res = await fetch(
+    `https://itunes.apple.com/sg/rss/customerreviews/id=${encodeURIComponent(
+      appId
+    )}/sortBy=mostRecent/json`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) return [];
+
+  const data = (await res.json()) as {
+    feed?: { entry?: PublicReviewEntry | PublicReviewEntry[] };
+  };
+  const entries = Array.isArray(data.feed?.entry)
+    ? data.feed.entry
+    : data.feed?.entry
+      ? [data.feed.entry]
+      : [];
+
+  return entries
+    .filter((entry) => entry.content?.label)
+    .map((entry, index) => ({
+      externalId: `as_public_${entry.id?.label ?? index}`,
+      store: "App Store",
+      rating: Number(entry["im:rating"]?.label ?? 0),
+      title: entry.title?.label ?? null,
+      body: entry.content?.label ?? "",
+      author: entry.author?.name?.label ?? null,
+      appVersion: entry["im:version"]?.label ?? null,
+      submittedAt: entry.updated?.label ? new Date(entry.updated.label) : new Date(),
+    }));
+}
+
 /**
  * Fetches App Store customer reviews (most recent first). Caps at `maxPages`
  * pages of 200 so a first sync doesn't run forever.
@@ -81,7 +123,7 @@ export async function fetchAppStoreReviews(
     pages += 1;
   }
 
-  return reviews;
+  return reviews.length > 0 ? reviews : fetchPublicAppStoreReviews(creds.appId);
 }
 
 /** Credential check: fetch a single review page. Throws on failure. */

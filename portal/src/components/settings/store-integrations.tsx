@@ -401,7 +401,7 @@ export function StoreIntegrations({ play, appStore }: Props) {
                   className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-surface disabled:opacity-50"
                 >
                   {appSavePending ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-                  Save credentials
+                  Save in portal
                 </button>
                 <button
                   type="button"
@@ -428,7 +428,7 @@ export function StoreIntegrations({ play, appStore }: Props) {
                   className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
                   {appPending ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
-                  Connect &amp; verify
+                  Save &amp; verify
                 </button>
               </div>
               <ResultLine result={appResult} />
