@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   AlertCircle,
   Apple,
@@ -21,6 +21,12 @@ import {
   type ActionResult,
 } from "@/app/(app)/settings/integration-actions";
 import type { IntegrationStatus } from "@/lib/reviews/credentials";
+import {
+  clearBrowserIntegration,
+  getBrowserIntegrations,
+  saveBrowserAppStoreCredentials,
+  saveBrowserPlayCredentials,
+} from "@/lib/reviews/browser-credentials";
 
 type Props = {
   play: IntegrationStatus;
@@ -32,7 +38,11 @@ function StatusBadge({ status }: { status: IntegrationStatus }) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
         <CheckCircle2 size={13} />
-        {status.source === "env" ? "Connected (.env)" : "Connected"}
+        {status.source === "env"
+          ? "Connected (.env)"
+          : status.source === "browser"
+            ? "Connected (browser)"
+            : "Connected"}
       </span>
     );
   }
@@ -128,7 +138,7 @@ function IntegrationCard({
             {pending ? <Loader2 size={13} className="animate-spin" /> : <ShieldCheck size={13} />}
             Test connection
           </button>
-          {status.source === "database" && (
+          {(status.source === "database" || status.source === "browser") && (
             <button
               type="button"
               disabled={pending}
@@ -162,6 +172,9 @@ function IntegrationCard({
 }
 
 export function StoreIntegrations({ play, appStore }: Props) {
+  const [playStatus, setPlayStatus] = useState(play);
+  const [appStoreStatus, setAppStoreStatus] = useState(appStore);
+
   // Play form state
   const [pkg, setPkg] = useState("");
   const [saJson, setSaJson] = useState("");
@@ -175,6 +188,28 @@ export function StoreIntegrations({ play, appStore }: Props) {
   const [p8, setP8] = useState("");
   const [appPending, startApp] = useTransition();
   const [appResult, setAppResult] = useState<ActionResult | null>(null);
+
+  useEffect(() => {
+    const saved = getBrowserIntegrations();
+    if (saved.play?.packageName) {
+      setPlayStatus({
+        connected: true,
+        source: "browser",
+        lastSyncedAt: null,
+        lastStatus: null,
+        hint: saved.play.packageName,
+      });
+    }
+    if (saved.appstore?.appId) {
+      setAppStoreStatus({
+        connected: true,
+        source: "browser",
+        lastSyncedAt: null,
+        lastStatus: null,
+        hint: `App ID ${saved.appstore.appId}`,
+      });
+    }
+  }, []);
 
   return (
     <section className="mt-6">
@@ -195,9 +230,19 @@ export function StoreIntegrations({ play, appStore }: Props) {
           icon={<Play size={20} />}
           name="Google Play"
           description="Service account with the Google Play Android Developer API, granted access in Play Console."
-          status={play}
+          status={playStatus}
           onTest={() => testIntegration("play")}
-          onDisconnect={() => disconnectIntegration("play")}
+          onDisconnect={async () => {
+            clearBrowserIntegration("play");
+            setPlayStatus({
+              connected: false,
+              source: "none",
+              lastSyncedAt: null,
+              lastStatus: null,
+              hint: null,
+            });
+            return disconnectIntegration("play");
+          }}
         >
           {() => (
             <div className="space-y-3">
@@ -227,9 +272,34 @@ export function StoreIntegrations({ play, appStore }: Props) {
                 disabled={playPending}
                 onClick={() =>
                   startPlay(async () =>
-                    setPlayResult(
-                      await savePlayIntegration({ packageName: pkg, serviceAccountJson: saJson })
-                    )
+                    {
+                      const result = await savePlayIntegration({ packageName: pkg, serviceAccountJson: saJson });
+                      if (result.ok) {
+                        try {
+                          const parsed = JSON.parse(saJson) as {
+                            client_email?: string;
+                            private_key?: string;
+                          };
+                          if (parsed.client_email && parsed.private_key) {
+                            saveBrowserPlayCredentials({
+                              packageName: pkg.trim(),
+                              clientEmail: parsed.client_email,
+                              privateKey: parsed.private_key,
+                            });
+                            setPlayStatus({
+                              connected: true,
+                              source: "browser",
+                              lastSyncedAt: null,
+                              lastStatus: result.message,
+                              hint: pkg.trim(),
+                            });
+                          }
+                        } catch {
+                          // The server action will show the actual validation error.
+                        }
+                      }
+                      setPlayResult(result);
+                    }
                   )
                 }
                 className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
@@ -247,9 +317,19 @@ export function StoreIntegrations({ play, appStore }: Props) {
           icon={<Apple size={20} />}
           name="App Store Connect"
           description="App Store Connect API key (.p8) generated under Users and Access → Integrations."
-          status={appStore}
+          status={appStoreStatus}
           onTest={() => testIntegration("appstore")}
-          onDisconnect={() => disconnectIntegration("appstore")}
+          onDisconnect={async () => {
+            clearBrowserIntegration("appstore");
+            setAppStoreStatus({
+              connected: false,
+              source: "none",
+              lastSyncedAt: null,
+              lastStatus: null,
+              hint: null,
+            });
+            return disconnectIntegration("appstore");
+          }}
         >
           {() => (
             <div className="space-y-3">
@@ -281,9 +361,26 @@ export function StoreIntegrations({ play, appStore }: Props) {
                 disabled={appPending}
                 onClick={() =>
                   startApp(async () =>
-                    setAppResult(
-                      await saveAppStoreIntegration({ appId, keyId, issuerId, privateKey: p8 })
-                    )
+                    {
+                      const creds = {
+                        appId: appId.trim(),
+                        keyId: keyId.trim(),
+                        issuerId: issuerId.trim(),
+                        privateKey: p8.trim(),
+                      };
+                      const result = await saveAppStoreIntegration(creds);
+                      if (result.ok) {
+                        saveBrowserAppStoreCredentials(creds);
+                        setAppStoreStatus({
+                          connected: true,
+                          source: "browser",
+                          lastSyncedAt: null,
+                          lastStatus: result.message,
+                          hint: `App ID ${creds.appId}`,
+                        });
+                      }
+                      setAppResult(result);
+                    }
                   )
                 }
                 className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
