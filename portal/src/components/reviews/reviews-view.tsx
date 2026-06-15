@@ -35,10 +35,19 @@ export type ReviewItem = {
   jiraKey: string | null;
 };
 
+type StoreRatingSummary = {
+  averageRating: number;
+  ratingCount: number;
+};
+
 type ReviewsViewProps = {
   reviews: ReviewItem[];
   configured: { playStore: boolean; appStore: boolean };
   jiraBaseUrl: string | null;
+  ratingSummaries: {
+    appStore: StoreRatingSummary | null;
+    playStore: StoreRatingSummary | null;
+  };
 };
 
 const RED = "var(--danger)";
@@ -90,11 +99,19 @@ function rangeCutoff(value: string): number | null {
   return days ? Date.now() - days * 86400000 : null;
 }
 
-export function ReviewsView({ reviews, configured, jiraBaseUrl }: ReviewsViewProps) {
+export function ReviewsView({
+  reviews,
+  configured,
+  jiraBaseUrl,
+  ratingSummaries,
+}: ReviewsViewProps) {
   const [displayedReviews, setDisplayedReviews] = useState(reviews);
+  const [storeRatingSummaries, setStoreRatingSummaries] = useState(ratingSummaries);
   const [connection, setConnection] = useState(configured);
   const [storeFilter, setStoreFilter] = useState<"All" | "App Store" | "Play Store">("All");
   const [ratingFilter, setRatingFilter] = useState<number | "All">("All");
+  const [sentimentFilter, setSentimentFilter] = useState<"All" | "positive" | "negative">("All");
+  const [moduleFilter, setModuleFilter] = useState("All");
   const [rangeFilter, setRangeFilter] = useState("all");
   const [ticketReview, setTicketReview] = useState<ReviewItem | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -111,12 +128,13 @@ export function ReviewsView({ reviews, configured, jiraBaseUrl }: ReviewsViewPro
     });
     const data = (await response.json()) as {
       reviews?: ReviewItem[];
+      ratingSummary?: StoreRatingSummary | null;
       error?: string;
     };
     if (!response.ok) {
       throw new Error(data.error ?? "Could not fetch App Store reviews.");
     }
-    return data.reviews ?? [];
+    return { reviews: data.reviews ?? [], ratingSummary: data.ratingSummary ?? null };
   }
 
   useEffect(() => {
@@ -130,9 +148,14 @@ export function ReviewsView({ reviews, configured, jiraBaseUrl }: ReviewsViewPro
 
     if (saved.appstore) {
       loadBrowserAppStoreReviews()
-        .then((live) => {
-          if (!live) return;
+        .then((liveResult) => {
+          if (!liveResult) return;
+          const live = liveResult.reviews;
           setDisplayedReviews(live.length > 0 ? live : reviews);
+          setStoreRatingSummaries((current) => ({
+            ...current,
+            appStore: liveResult.ratingSummary ?? current.appStore,
+          }));
           setSyncResult({
             ok: true,
             results: [
@@ -168,24 +191,60 @@ export function ReviewsView({ reviews, configured, jiraBaseUrl }: ReviewsViewPro
     }
   }, [configured.appStore, configured.playStore, reviews]);
 
+  const modules = useMemo(
+    () => ["All", ...Array.from(new Set(displayedReviews.map((r) => r.category))).sort()],
+    [displayedReviews]
+  );
+
   const filtered = useMemo(() => {
     const cutoff = rangeCutoff(rangeFilter);
     return displayedReviews.filter(
       (r) =>
         (storeFilter === "All" || r.store === storeFilter) &&
         (ratingFilter === "All" || r.rating === ratingFilter) &&
+        (sentimentFilter === "All" || r.sentiment === sentimentFilter) &&
+        (moduleFilter === "All" || r.category === moduleFilter) &&
         (cutoff === null || new Date(r.createdAt).getTime() >= cutoff)
     );
-  }, [displayedReviews, storeFilter, ratingFilter, rangeFilter]);
+  }, [displayedReviews, storeFilter, ratingFilter, sentimentFilter, moduleFilter, rangeFilter]);
+
+  const hasCommentFilters =
+    ratingFilter !== "All" ||
+    sentimentFilter !== "All" ||
+    moduleFilter !== "All" ||
+    rangeFilter !== "all";
+
+  const publicRating = useMemo(() => {
+    const summaries =
+      storeFilter === "App Store"
+        ? [storeRatingSummaries.appStore]
+        : storeFilter === "Play Store"
+          ? [storeRatingSummaries.playStore]
+          : [storeRatingSummaries.appStore, storeRatingSummaries.playStore];
+    const available = summaries.filter((summary): summary is StoreRatingSummary => Boolean(summary));
+    if (available.length === 0) return null;
+
+    const ratingCount = available.reduce((sum, summary) => sum + summary.ratingCount, 0);
+    const averageRating =
+      ratingCount > 0
+        ? available.reduce(
+            (sum, summary) => sum + summary.averageRating * summary.ratingCount,
+            0
+          ) / ratingCount
+        : available.reduce((sum, summary) => sum + summary.averageRating, 0) / available.length;
+
+    return { averageRating, ratingCount };
+  }, [storeFilter, storeRatingSummaries]);
 
   const stats = useMemo(() => {
-    const total = displayedReviews.length;
-    const avg = total ? displayedReviews.reduce((s, r) => s + r.rating, 0) / total : 0;
-    const negative = displayedReviews.filter((r) => r.sentiment === "negative").length;
-    const appStore = displayedReviews.filter((r) => r.store === "App Store").length;
-    const playStore = displayedReviews.filter((r) => r.store === "Play Store").length;
+    const total = filtered.length;
+    const reviewAvg = total ? filtered.reduce((s, r) => s + r.rating, 0) / total : 0;
+    const avg = !hasCommentFilters && publicRating ? publicRating.averageRating : reviewAvg;
+    const negative = filtered.filter((r) => r.sentiment === "negative").length;
+    const appStore = filtered.filter((r) => r.store === "App Store").length;
+    const playStore = filtered.filter((r) => r.store === "Play Store").length;
     return { total, avg, negative, appStore, playStore };
-  }, [displayedReviews]);
+  }, [filtered, hasCommentFilters, publicRating]);
 
   const noStoreConnected = !connection.playStore && !connection.appStore;
 
@@ -194,9 +253,14 @@ export function ReviewsView({ reviews, configured, jiraBaseUrl }: ReviewsViewPro
       const saved = getBrowserIntegrations();
       if (saved.appstore) {
         try {
-          const live = await loadBrowserAppStoreReviews();
-          if (live) {
+          const liveResult = await loadBrowserAppStoreReviews();
+          if (liveResult) {
+            const live = liveResult.reviews;
             setDisplayedReviews(live.length > 0 ? live : reviews);
+            setStoreRatingSummaries((current) => ({
+              ...current,
+              appStore: liveResult.ratingSummary ?? current.appStore,
+            }));
             setConnection((current) => ({ ...current, appStore: true }));
             setSyncResult({
               ok: true,
@@ -330,7 +394,13 @@ export function ReviewsView({ reviews, configured, jiraBaseUrl }: ReviewsViewPro
             </p>
             <Stars rating={Math.round(stats.avg)} />
           </div>
-          <p className="mt-1 text-xs text-muted">across both stores</p>
+          <p className="mt-1 text-xs text-muted">
+            {!hasCommentFilters && publicRating
+              ? `${publicRating.ratingCount.toLocaleString()} ${
+                  storeFilter === "All" ? "public store" : storeFilter
+                } ratings`
+              : "for selected reviews"}
+          </p>
         </Card>
         <Card className="p-5">
           <CardLabel>Negative reviews</CardLabel>
@@ -398,21 +468,53 @@ export function ReviewsView({ reviews, configured, jiraBaseUrl }: ReviewsViewPro
           ))}
         </div>
 
-        {/* Date range */}
-        <div className="relative shrink-0">
-          <Calendar size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-          <select
-            value={rangeFilter}
-            onChange={(e) => setRangeFilter(e.target.value)}
-            className="h-9 w-full cursor-pointer appearance-none rounded-lg border border-border bg-background pl-9 pr-8 text-xs font-medium text-foreground outline-none transition-colors hover:border-foreground/30 focus:border-brand lg:w-44"
-          >
-            {RANGES.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted" />
+        <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+          {(["All", "positive", "negative"] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setSentimentFilter(s)}
+              className={cn(
+                "inline-flex items-center rounded-full border px-3.5 py-2 text-xs font-medium capitalize transition-colors",
+                sentimentFilter === s
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-background text-muted hover:text-foreground"
+              )}
+            >
+              {s === "All" ? "All sentiment" : s}
+            </button>
+          ))}
+
+          <div className="relative shrink-0">
+            <select
+              value={moduleFilter}
+              onChange={(e) => setModuleFilter(e.target.value)}
+              className="h-9 w-full cursor-pointer appearance-none rounded-lg border border-border bg-background px-3.5 pr-8 text-xs font-medium text-foreground outline-none transition-colors hover:border-foreground/30 focus:border-brand lg:w-44"
+            >
+              {modules.map((module) => (
+                <option key={module} value={module}>
+                  {module === "All" ? "All modules" : module}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted" />
+          </div>
+
+          {/* Date range */}
+          <div className="relative shrink-0">
+            <Calendar size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+            <select
+              value={rangeFilter}
+              onChange={(e) => setRangeFilter(e.target.value)}
+              className="h-9 w-full cursor-pointer appearance-none rounded-lg border border-border bg-background pl-9 pr-8 text-xs font-medium text-foreground outline-none transition-colors hover:border-foreground/30 focus:border-brand lg:w-44"
+            >
+              {RANGES.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted" />
+          </div>
         </div>
       </div>
 

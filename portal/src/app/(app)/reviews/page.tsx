@@ -1,11 +1,16 @@
 import { prisma } from "@/lib/db";
 import { getPlayCredentials, getAppStoreCredentials } from "@/lib/reviews/credentials";
-import { fetchAppStoreReviews } from "@/lib/reviews/app-store";
+import { fetchAppStoreRatingSummary, fetchAppStoreReviews } from "@/lib/reviews/app-store";
 import { categoryFromText, sentimentFromRating } from "@/lib/reviews/classify";
 import { ReviewsView, type ReviewItem } from "@/components/reviews/reviews-view";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "App Reviews — Zig Beacon" };
+
+const PLAY_STORE_PUBLIC_RATING = {
+  averageRating: 4.2,
+  ratingCount: 31200,
+};
 
 export default async function ReviewsPage() {
   const [rows, play, appStore] = await Promise.all([
@@ -34,25 +39,28 @@ export default async function ReviewsPage() {
     jiraKey: r.jiraKey ?? null,
   }));
 
-  const liveAppStoreReviews: ReviewItem[] = appStore
-    ? await fetchAppStoreReviews(appStore, 3)
-        .then((reviews) =>
-          reviews.map((review, index) => ({
-            id: -1 - index,
-            store: review.store,
-            rating: review.rating,
-            title: review.title,
-            body: review.body,
-            author: review.author,
-            appVersion: review.appVersion,
-            category: categoryFromText(`${review.title ?? ""} ${review.body}`),
-            sentiment: sentimentFromRating(review.rating),
-            createdAt: review.submittedAt.toISOString(),
-            jiraKey: null,
-          }))
-        )
-        .catch(() => [])
-    : [];
+  const [liveAppStoreReviews, ratingSummary] = appStore
+    ? await Promise.all([
+        fetchAppStoreReviews(appStore, 3)
+          .then((reviews) =>
+            reviews.map((review, index) => ({
+              id: -1 - index,
+              store: review.store,
+              rating: review.rating,
+              title: review.title,
+              body: review.body,
+              author: review.author,
+              appVersion: review.appVersion,
+              category: categoryFromText(`${review.title ?? ""} ${review.body}`),
+              sentiment: sentimentFromRating(review.rating),
+              createdAt: review.submittedAt.toISOString(),
+              jiraKey: null,
+            }))
+          )
+          .catch(() => []),
+        fetchAppStoreRatingSummary(appStore.appId).catch(() => null),
+      ])
+    : [[], null];
 
   const liveKeys = new Set(
     liveAppStoreReviews.map((review) => `${review.store}:${review.title}:${review.body}`)
@@ -75,6 +83,10 @@ export default async function ReviewsPage() {
         appStore: Boolean(appStore),
       }}
       jiraBaseUrl={process.env.JIRA_BASE_URL?.replace(/\/+$/, "") ?? null}
+      ratingSummaries={{
+        appStore: ratingSummary,
+        playStore: PLAY_STORE_PUBLIC_RATING,
+      }}
     />
   );
 }

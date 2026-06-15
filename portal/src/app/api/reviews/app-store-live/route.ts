@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchAppStoreReviews } from "@/lib/reviews/app-store";
+import { fetchAppStoreRatingSummary, fetchAppStoreReviews } from "@/lib/reviews/app-store";
 import { categoryFromText, sentimentFromRating } from "@/lib/reviews/classify";
 import type { AppStoreCredentials } from "@/lib/reviews/credentials";
 
@@ -10,8 +10,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing App Store credentials." }, { status: 400 });
     }
 
-    const reviews = await fetchAppStoreReviews(creds, 3);
+    const [reviews, ratingSummary] = await Promise.all([
+      fetchAppStoreReviews(creds, 3),
+      fetchAppStoreRatingSummary(creds.appId),
+    ]);
     return NextResponse.json({
+      ratingSummary,
       reviews: reviews.map((review, index) => ({
         id: -1000 - index,
         store: review.store,

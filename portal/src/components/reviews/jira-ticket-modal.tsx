@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { motion } from "framer-motion";
-import { AlertCircle, CheckCircle2, ExternalLink, Loader2, Ticket, X } from "lucide-react";
+import { CheckCircle2, ExternalLink, Loader2, Ticket, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createTicketForReview, type CreateTicketResult } from "@/app/(app)/reviews/jira-actions";
 
@@ -195,20 +195,6 @@ export function JiraTicketModal({
                 className={cn(inputClass, "resize-none font-mono text-xs leading-5")}
               />
             </div>
-
-            {result && !result.ok && (
-              <div
-                className={cn(
-                  "flex items-start gap-2 rounded-lg border p-2.5 text-[13px]",
-                  result.notConfigured
-                    ? "border-warn/30 bg-warn/10 text-warn"
-                    : "border-danger/30 bg-danger/10 text-danger"
-                )}
-              >
-                <AlertCircle size={15} className="mt-0.5 shrink-0" />
-                <span>{result.message}</span>
-              </div>
-            )}
 
             <div className="flex gap-2 pt-1">
               <button

@@ -41,6 +41,32 @@ type PublicReviewEntry = {
   "im:version"?: { label?: string };
 };
 
+export type AppStoreRatingSummary = {
+  averageRating: number;
+  ratingCount: number;
+};
+
+export async function fetchAppStoreRatingSummary(
+  appId: string
+): Promise<AppStoreRatingSummary | null> {
+  const res = await fetch(
+    `https://itunes.apple.com/lookup?id=${encodeURIComponent(appId)}&country=sg`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) return null;
+
+  const data = (await res.json()) as {
+    results?: { averageUserRating?: number; userRatingCount?: number }[];
+  };
+  const app = data.results?.[0];
+  if (typeof app?.averageUserRating !== "number") return null;
+
+  return {
+    averageRating: app.averageUserRating,
+    ratingCount: app.userRatingCount ?? 0,
+  };
+}
+
 async function fetchPublicAppStoreReviews(appId: string): Promise<NormalizedReview[]> {
   const res = await fetch(
     `https://itunes.apple.com/sg/rss/customerreviews/id=${encodeURIComponent(

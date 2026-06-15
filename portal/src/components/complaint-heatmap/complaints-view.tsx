@@ -15,6 +15,7 @@ import {
   Target,
   Wrench,
   ChevronDown,
+  Download,
   Star,
   Flame,
   type LucideIcon,
@@ -96,6 +97,18 @@ function ageLabel(value: string) {
 
 function severityLabel(severity: string) {
   return severity === "high" ? "High" : severity === "medium" ? "Medium" : "Low";
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function safeFileName(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
 /** One complaint issue with an expandable root cause + recommended fix. */
@@ -298,6 +311,121 @@ export function ComplaintsView({
   const focusModule = reportGroups[0];
   const maxClusterVolume = Math.max(1, ...activeClusters.map((c) => c.volume));
   const maxFocusScore = Math.max(1, ...reportGroups.map((g) => g.focusScore));
+
+  function downloadReport(group: (typeof reportGroups)[number], rank: number) {
+    const generatedAt = new Date().toLocaleString("en-SG", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+    const highestVolume = group.items[0]?.volume ?? 0;
+    const severityMix = group.items.reduce<Record<string, number>>((acc, issue) => {
+      acc[issue.severity] = (acc[issue.severity] ?? 0) + 1;
+      return acc;
+    }, {});
+    const topFix =
+      group.items[0]?.fix ?? CATEGORY_FIX[group.category] ?? "Review the highest-volume comments and route the fix to the owning product squad.";
+    const issueRows = group.items
+      .map((issue, index) => {
+        const fix = issue.fix ?? CATEGORY_FIX[issue.category] ?? "Needs product triage.";
+        return `
+          <tr>
+            <td>${index + 1}</td>
+            <td>
+              <strong>${escapeHtml(issue.issue)}</strong>
+              ${
+                issue.rootCause
+                  ? `<div class="muted small">Root cause: ${escapeHtml(issue.rootCause)}</div>`
+                  : ""
+              }
+            </td>
+            <td>${issue.volume.toLocaleString()}</td>
+            <td>${issue.trendPct >= 0 ? "+" : ""}${Math.round(issue.trendPct)}%</td>
+            <td><span class="pill ${issue.severity}">${severityLabel(issue.severity)}</span></td>
+            <td>${escapeHtml(fix)}</td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    const html = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(group.category)} complaint report</title>
+  <style>
+    body { color: #111; font: 14px/1.55 Arial, Helvetica, sans-serif; margin: 40px; }
+    h1 { font-size: 30px; line-height: 1.15; margin: 0 0 6px; }
+    h2 { border-top: 1px solid #ddd; font-size: 18px; margin-top: 28px; padding-top: 20px; }
+    .muted { color: #676b73; }
+    .small { font-size: 12px; margin-top: 4px; }
+    .eyebrow { color: #0b66ff; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    .summary { background: #f3f7ff; border: 1px solid #b8d2ff; border-radius: 12px; margin: 22px 0; padding: 18px; }
+    .grid { display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); margin: 18px 0; }
+    .metric { border: 1px solid #ddd; border-radius: 10px; padding: 14px; }
+    .metric span { color: #676b73; display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    .metric strong { display: block; font-size: 24px; margin-top: 5px; }
+    table { border-collapse: collapse; margin-top: 12px; width: 100%; }
+    th, td { border-bottom: 1px solid #e5e5e5; padding: 11px; text-align: left; vertical-align: top; }
+    th { color: #676b73; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    .pill { border-radius: 999px; display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; text-transform: uppercase; }
+    .high { background: #fee2e2; color: #b91c1c; }
+    .medium { background: #fef3c7; color: #92400e; }
+    .low { background: #f1f5f9; color: #475569; }
+    .fix { background: #f6f9ff; border: 1px solid #cfe0ff; border-radius: 10px; padding: 14px; }
+    @media print { body { margin: 24px; } .grid { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+  <p class="eyebrow">Zig Beacon complaint report</p>
+  <h1>${escapeHtml(group.category)} module</h1>
+  <p class="muted">Generated ${escapeHtml(generatedAt)} · Ranked priority ${rank}</p>
+
+  <div class="summary">
+    <strong>Executive summary</strong>
+    <p>${escapeHtml(group.category)} has ${group.volume.toLocaleString()} complaint reports with a ${group.trend >= 0 ? "+" : ""}${group.trend}% trend. ${group.high} high-severity issue${group.high === 1 ? "" : "s"} require attention, and ${group.reviewMentions.toLocaleString()} App Store / Play Store review${group.reviewMentions === 1 ? "" : "s"} mention this module.</p>
+  </div>
+
+  <div class="grid">
+    <div class="metric"><span>Total reports</span><strong>${group.volume.toLocaleString()}</strong></div>
+    <div class="metric"><span>Store mentions</span><strong>${group.reviewMentions.toLocaleString()}</strong></div>
+    <div class="metric"><span>High severity</span><strong>${group.high}</strong></div>
+    <div class="metric"><span>Focus score</span><strong>${group.focusScore.toLocaleString()}</strong></div>
+  </div>
+
+  <h2>Severity and impact</h2>
+  <p>Severity mix: ${severityLabel("high")} ${severityMix.high ?? 0}, ${severityLabel("medium")} ${severityMix.medium ?? 0}, ${severityLabel("low")} ${severityMix.low ?? 0}. The largest issue alone accounts for ${highestVolume.toLocaleString()} report${highestVolume === 1 ? "" : "s"}.</p>
+  ${group.avgRating ? `<p>Average rating from related store comments: ${group.avgRating.toFixed(1)} / 5.</p>` : ""}
+
+  <h2>Recommended action</h2>
+  <div class="fix">${escapeHtml(topFix)}</div>
+
+  <h2>Issue breakdown</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Complaint theme</th>
+        <th>Reports</th>
+        <th>Trend</th>
+        <th>Severity</th>
+        <th>Recommended fix</th>
+      </tr>
+    </thead>
+    <tbody>${issueRows}</tbody>
+  </table>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `zig-beacon-${safeFileName(group.category)}-complaint-report.html`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <div>
@@ -510,9 +638,19 @@ export function ComplaintsView({
                           Priority 1
                         </span>
                       </div>
-                      <h2 className="mt-1 text-xl font-semibold tracking-tight text-foreground">
-                        {focusModule.category}
-                      </h2>
+                      <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <h2 className="text-xl font-semibold tracking-tight text-foreground">
+                          {focusModule.category}
+                        </h2>
+                        <button
+                          type="button"
+                          onClick={() => downloadReport(focusModule, 1)}
+                          className="inline-flex w-fit items-center gap-2 rounded-lg border border-brand/30 bg-background px-3 py-2 text-xs font-semibold text-brand transition-colors hover:border-brand hover:bg-brand/10"
+                        >
+                          <Download size={14} />
+                          Download report
+                        </button>
+                      </div>
                       <p className="mt-1.5 text-[13px] leading-6 text-foreground/90">
                         <span className="font-semibold">{focusModule.category}</span> is the module
                         to focus on — {focusModule.volume.toLocaleString()} complaint reports, trend{" "}
@@ -627,6 +765,14 @@ export function ComplaintsView({
                                 {group.reviewMentions} review{group.reviewMentions === 1 ? "" : "s"}
                               </span>
                             )}
+                            <button
+                              type="button"
+                              onClick={() => downloadReport(group, idx + 1)}
+                              className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-muted transition-colors hover:border-brand/40 hover:text-brand"
+                            >
+                              <Download size={12} />
+                              Download
+                            </button>
                             <span className="ml-auto text-sm font-semibold tabular-nums text-foreground">
                               {group.volume.toLocaleString()}
                               <span className="ml-1 text-xs font-normal text-muted">reports</span>
