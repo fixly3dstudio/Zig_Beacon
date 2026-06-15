@@ -25,6 +25,10 @@ type Market = {
   taxiIntegration: number;
   digitalPayments: number;
   airportReadiness: number;
+  operatingDetail: string;
+  demandSignals: string[];
+  zigImplication: string;
+  watchouts: string[];
 };
 
 type Playbook = {
@@ -33,6 +37,10 @@ type Playbook = {
   benchmark: string;
   insight: string;
   readiness: number;
+  whyItMatters: string;
+  leadingMarkets: string[];
+  zigMoves: string[];
+  evidence: string[];
 };
 
 const markets: Market[] = [
@@ -48,6 +56,19 @@ const markets: Market[] = [
     taxiIntegration: 94,
     digitalPayments: 88,
     airportReadiness: 66,
+    operatingDetail:
+      "Dense regulated taxi supply, strong brand trust, and high payment readiness create a strong base, but booking convenience and promo clarity decide whether riders stay inside Zig.",
+    demandSignals: [
+      "Taxi trust remains high for safety-sensitive and business trips.",
+      "Airport and rainy-day demand expose supply allocation gaps quickly.",
+      "Riders compare Zig against super-app convenience, not just taxi reliability.",
+    ],
+    zigImplication:
+      "Use Singapore as the control market: every regional lesson should translate into faster booking, clearer taxi availability, and stronger airport confidence.",
+    watchouts: [
+      "Avoid treating fleet trust as enough on its own.",
+      "Promo friction and app reliability complaints can weaken a strong taxi base.",
+    ],
   },
   {
     city: "Seoul",
@@ -61,6 +82,19 @@ const markets: Market[] = [
     taxiIntegration: 91,
     digitalPayments: 84,
     airportReadiness: 74,
+    operatingDetail:
+      "Seoul shows how taxi-first mobility can still feel modern when dispatch depth, safety, local maps, and payment rails are tightly integrated.",
+    demandSignals: [
+      "Riders expect reliable dispatch visibility before accepting wait time.",
+      "Local wallet and card rails reduce payment anxiety.",
+      "Safety and driver standards are visible parts of the product story.",
+    ],
+    zigImplication:
+      "Benchmark Seoul for dispatch transparency, driver confidence cues, and local payment affordances inside high-frequency taxi flows.",
+    watchouts: [
+      "Deep local integrations are hard to copy without operational ownership.",
+      "Taxi-first does not mean low-feature; the product layer still needs depth.",
+    ],
   },
   {
     city: "Tokyo",
@@ -74,6 +108,19 @@ const markets: Market[] = [
     taxiIntegration: 96,
     digitalPayments: 73,
     airportReadiness: 81,
+    operatingDetail:
+      "Tokyo is a restricted, licensed-taxi benchmark where reliability, service quality, and airport handoff discipline matter more than aggressive subsidy mechanics.",
+    demandSignals: [
+      "Premium riders value licensed supply and predictable pickup discipline.",
+      "Airport users need terminal, queue, and vehicle guidance more than novelty.",
+      "Reliability is a willingness-to-pay lever.",
+    ],
+    zigImplication:
+      "Use Tokyo as a model for airport guidance, premium taxi positioning, and visible driver/service standards.",
+    watchouts: [
+      "Restricted markets may hide weak consumer UX behind supply scarcity.",
+      "High reliability expectations raise the cost of small app failures.",
+    ],
   },
   {
     city: "Taipei",
@@ -87,6 +134,19 @@ const markets: Market[] = [
     taxiIntegration: 82,
     digitalPayments: 78,
     airportReadiness: 62,
+    operatingDetail:
+      "Taipei is a hybrid market where taxi networks, ride-hail style UX, stored value, and loyalty mechanics increasingly converge.",
+    demandSignals: [
+      "Stored value makes promotions, refunds, and repeat use feel simpler.",
+      "Hybrid supply creates expectations for both taxi trust and app flexibility.",
+      "Loyalty becomes more meaningful when riders use multiple transport modes.",
+    ],
+    zigImplication:
+      "Benchmark Taipei for wallet-linked loyalty, refund visibility, and cross-mode habit loops that can strengthen Zig beyond single taxi bookings.",
+    watchouts: [
+      "Hybrid products can become confusing if ride types are not clearly compared.",
+      "Wallet features need visible balance, refund, and expiry communication.",
+    ],
   },
   {
     city: "Sydney",
@@ -100,6 +160,19 @@ const markets: Market[] = [
     taxiIntegration: 54,
     digitalPayments: 91,
     airportReadiness: 76,
+    operatingDetail:
+      "Sydney represents an open PHC market where transparent price comparison, subscriptions, scheduled rides, and airport reliability reduce churn.",
+    demandSignals: [
+      "Riders are comfortable comparing fares across apps before booking.",
+      "Subscription or membership value can soften price switching.",
+      "Scheduled airport trips are a meaningful retention moment.",
+    ],
+    zigImplication:
+      "Use Sydney to pressure-test fare transparency, subscription value, and scheduled ride confidence against open-market alternatives.",
+    watchouts: [
+      "Open markets train users to switch quickly.",
+      "A weak value explanation makes subscriptions feel like another fee.",
+    ],
   },
   {
     city: "Bangkok",
@@ -113,6 +186,19 @@ const markets: Market[] = [
     taxiIntegration: 48,
     digitalPayments: 69,
     airportReadiness: 58,
+    operatingDetail:
+      "Bangkok is a tourism-led super-app environment where airport conversion, wallet onboarding, language support, and cash-to-digital behavior shape adoption.",
+    demandSignals: [
+      "Tourists need pickup certainty, translation, and payment clarity.",
+      "Cash-to-wallet conversion can unlock repeated app use.",
+      "Airport trips are high-intent moments for first-time users.",
+    ],
+    zigImplication:
+      "Benchmark Bangkok for tourist onboarding, airport pickup education, and lightweight wallet conversion patterns.",
+    watchouts: [
+      "Tourism spikes can mask inconsistent daily commuter value.",
+      "Airport pickup complexity can create high-visibility complaints.",
+    ],
   },
 ];
 
@@ -123,6 +209,19 @@ const playbooks: Playbook[] = [
     benchmark: "Tokyo, Seoul",
     insight: "Flight-aware pickup, terminal guidance, and licensed taxi queues reduce arrival anxiety.",
     readiness: 74,
+    whyItMatters:
+      "Airport rides are high-stakes journeys: uncertainty around terminal, pickup point, driver coordination, and luggage timing quickly turns into complaints.",
+    leadingMarkets: ["Tokyo", "Seoul", "Sydney"],
+    zigMoves: [
+      "Add terminal-specific pickup instructions and landmark photos.",
+      "Show flight-aware pickup timing and waiting expectations.",
+      "Create a dedicated airport issue taxonomy for complaint tracking.",
+    ],
+    evidence: [
+      "Tokyo scores 81 on airport readiness with licensed taxi discipline.",
+      "Seoul pairs managed taxi supply with stronger airport handoff maturity.",
+      "Zig complaints already mention airport pickup confusion.",
+    ],
   },
   {
     title: "Taxi-first trust layer",
@@ -130,6 +229,19 @@ const playbooks: Playbook[] = [
     benchmark: "Singapore, Tokyo",
     insight: "Safety reputation becomes more valuable when paired with visible driver standards.",
     readiness: 86,
+    whyItMatters:
+      "Taxi trust is Zig's strongest regional advantage, but riders need to see that trust inside the app through driver quality, safety cues, and trip controls.",
+    leadingMarkets: ["Singapore", "Tokyo", "Seoul"],
+    zigMoves: [
+      "Surface driver standards and verified taxi supply in booking flows.",
+      "Make safety actions available during the ride, not buried in settings.",
+      "Use review themes to track trust erosion by ride type.",
+    ],
+    evidence: [
+      "Singapore scores 94 on taxi integration.",
+      "Tokyo scores 96 on licensed taxi integration.",
+      "Safety-positive reviews can be turned into product proof points.",
+    ],
   },
   {
     title: "Stored-value mobility wallet",
@@ -137,6 +249,19 @@ const playbooks: Playbook[] = [
     benchmark: "Seoul, Taipei",
     insight: "Wallet rails make refunds, corporate budgets, loyalty, and promo redemption feel native.",
     readiness: 68,
+    whyItMatters:
+      "Payment confidence reduces support load. Stored value is especially useful when it makes refunds, promo redemption, and corporate travel budgets easier to understand.",
+    leadingMarkets: ["Seoul", "Taipei", "Singapore"],
+    zigMoves: [
+      "Make wallet refunds and credits visible immediately after support actions.",
+      "Unify promo redemption, points, and stored value into one checkout explanation.",
+      "Add payment complaint tags for refund delay, charge clarity, and promo failure.",
+    ],
+    evidence: [
+      "Taipei shows hybrid mobility and stored-value convergence.",
+      "Seoul has strong local payment rail maturity.",
+      "Payments appear in Zig complaint clusters around refund visibility.",
+    ],
   },
   {
     title: "EV fleet visibility",
@@ -144,6 +269,19 @@ const playbooks: Playbook[] = [
     benchmark: "Sydney, Singapore",
     insight: "Dedicated EV choice works best when supply, wait time, and price deltas are explicit.",
     readiness: 57,
+    whyItMatters:
+      "EV options can strengthen brand perception, but only if riders understand availability, wait-time tradeoff, and price difference before selecting it.",
+    leadingMarkets: ["Sydney", "Singapore"],
+    zigMoves: [
+      "Show EV availability only where supply confidence is high.",
+      "Compare EV wait time and fare delta against standard taxi options.",
+      "Track whether EV intent converts or creates abandonment.",
+    ],
+    evidence: [
+      "Sydney has high digital payment maturity and open-market rider comparison behavior.",
+      "Singapore can pair EV visibility with trusted regulated fleet supply.",
+      "EV readiness is lower than taxi trust, so expectations need careful framing.",
+    ],
   },
 ];
 
@@ -330,6 +468,108 @@ export default function Page() {
               </div>
             ))}
           </div>
+
+          <div className="mt-6 border-t border-border pt-5">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <CardLabel>Regional pulse details</CardLabel>
+                <h3 className="mt-1 text-base font-semibold tracking-tight text-foreground">
+                  What each market teaches Zig
+                </h3>
+              </div>
+              <span className="text-xs text-muted">
+                Operating model · demand signals · Zig implication · watchouts
+              </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4">
+              {markets.map((market) => (
+                <div
+                  className="rounded-lg border border-border bg-background p-4"
+                  key={`${market.city}-details`}
+                >
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={cn("h-2 w-2 rounded-full", maturityDot(market.maturity))}
+                        />
+                        <h4 className="text-sm font-semibold text-foreground">
+                          {market.city}
+                        </h4>
+                        <span className="text-xs text-muted">
+                          {market.region} · {market.maturity}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-[13px] leading-6 text-muted">
+                        {market.operatingDetail}
+                      </p>
+                    </div>
+                    <div className="grid min-w-[220px] grid-cols-2 gap-2 text-xs">
+                      <div className="rounded-md bg-surface p-2">
+                        <span className="text-muted">Payment</span>
+                        <p className="mt-1 font-semibold tabular-nums text-foreground">
+                          {market.digitalPayments}
+                        </p>
+                      </div>
+                      <div className="rounded-md bg-surface p-2">
+                        <span className="text-muted">Composite</span>
+                        <p className="mt-1 font-semibold tabular-nums text-foreground">
+                          {
+                            scanRows.find((row) => row.city === market.city)
+                              ?.composite
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
+                    <div className="rounded-md border border-border bg-surface p-3">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-muted">
+                        Demand signals
+                      </p>
+                      <ul className="mt-2 space-y-2">
+                        {market.demandSignals.map((signal) => (
+                          <li
+                            className="flex gap-2 text-[13px] leading-5 text-foreground"
+                            key={signal}
+                          >
+                            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                            {signal}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="rounded-md border border-border bg-surface p-3">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-muted">
+                        Zig implication
+                      </p>
+                      <p className="mt-2 text-[13px] leading-6 text-foreground">
+                        {market.zigImplication}
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-border bg-surface p-3">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-muted">
+                        Watchouts
+                      </p>
+                      <ul className="mt-2 space-y-2">
+                        {market.watchouts.map((watchout) => (
+                          <li
+                            className="flex gap-2 text-[13px] leading-5 text-foreground"
+                            key={watchout}
+                          >
+                            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-track" />
+                            {watchout}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </Card>
 
         <Card className="col-span-12 lg:col-span-4">
@@ -498,6 +738,86 @@ export default function Page() {
                   })}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          <div className="mt-6 border-t border-border pt-5">
+            <CardLabel>Priority benchmark details</CardLabel>
+            <h3 className="mt-1 text-base font-semibold tracking-tight text-foreground">
+              How to translate each benchmark into product work
+            </h3>
+            <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {playbooks.map((playbook) => {
+                const Icon = playbook.icon;
+                return (
+                  <div
+                    className="rounded-lg border border-border bg-surface p-5"
+                    key={`${playbook.title}-details`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border bg-background text-foreground">
+                        <Icon size={18} />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-foreground">
+                          {playbook.title}
+                        </h4>
+                        <p className="mt-1 text-xs text-muted">
+                          Benchmarks: {playbook.benchmark}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="mt-4 text-[13px] leading-6 text-muted">
+                      {playbook.whyItMatters}
+                    </p>
+
+                    <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-3">
+                      <div>
+                        <p className="text-[11px] font-medium uppercase tracking-wider text-muted">
+                          Leading markets
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {playbook.leadingMarkets.map((market) => (
+                            <span
+                              className="rounded-full border border-border bg-background px-2 py-1 text-[11px] text-foreground"
+                              key={market}
+                            >
+                              {market}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-medium uppercase tracking-wider text-muted">
+                          Zig moves
+                        </p>
+                        <ul className="mt-2 space-y-2">
+                          {playbook.zigMoves.map((move) => (
+                            <li className="flex gap-2 text-[12px] leading-5 text-foreground" key={move}>
+                              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                              {move}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-medium uppercase tracking-wider text-muted">
+                          Evidence
+                        </p>
+                        <ul className="mt-2 space-y-2">
+                          {playbook.evidence.map((item) => (
+                            <li className="flex gap-2 text-[12px] leading-5 text-foreground" key={item}>
+                              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground" />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </Card>
