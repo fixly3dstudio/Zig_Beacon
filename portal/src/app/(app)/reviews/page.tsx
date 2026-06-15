@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 import { getPlayCredentials, getAppStoreCredentials } from "@/lib/reviews/credentials";
+import { fetchAppStoreReviews } from "@/lib/reviews/app-store";
+import { categoryFromText, sentimentFromRating } from "@/lib/reviews/classify";
 import { ReviewsView, type ReviewItem } from "@/components/reviews/reviews-view";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +20,7 @@ export default async function ReviewsPage() {
     getAppStoreCredentials(),
   ]);
 
-  const reviews: ReviewItem[] = rows.map((r) => ({
+  const storedReviews: ReviewItem[] = rows.map((r) => ({
     id: r.id,
     store: r.source,
     rating: r.rating ?? 0,
@@ -30,6 +32,38 @@ export default async function ReviewsPage() {
     sentiment: r.sentiment,
     createdAt: r.createdAt.toISOString(),
   }));
+
+  const liveAppStoreReviews: ReviewItem[] = appStore
+    ? await fetchAppStoreReviews(appStore, 3)
+        .then((reviews) =>
+          reviews.map((review, index) => ({
+            id: -1 - index,
+            store: review.store,
+            rating: review.rating,
+            title: review.title,
+            body: review.body,
+            author: review.author,
+            appVersion: review.appVersion,
+            category: categoryFromText(`${review.title ?? ""} ${review.body}`),
+            sentiment: sentimentFromRating(review.rating),
+            createdAt: review.submittedAt.toISOString(),
+          }))
+        )
+        .catch(() => [])
+    : [];
+
+  const liveKeys = new Set(
+    liveAppStoreReviews.map((review) => `${review.store}:${review.title}:${review.body}`)
+  );
+  const reviews =
+    liveAppStoreReviews.length > 0
+      ? [
+          ...liveAppStoreReviews,
+          ...storedReviews.filter(
+            (review) => !liveKeys.has(`${review.store}:${review.title}:${review.body}`)
+          ),
+        ]
+      : storedReviews;
 
   return (
     <ReviewsView

@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypto";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 
 export type PlayCredentials = {
@@ -16,12 +17,22 @@ export type AppStoreCredentials = {
 
 export type IntegrationStatus = {
   connected: boolean;
-  source: "database" | "env" | "none";
+  source: "database" | "browser" | "env" | "none";
   lastSyncedAt: string | null;
   lastStatus: string | null;
   /** Non-secret hint shown in the UI (e.g. package name / app id). */
   hint: string | null;
 };
+
+type StoredIntegration = {
+  store: string;
+  config: string;
+  connected: boolean;
+  lastSyncedAt: Date | null;
+  lastStatus: string | null;
+};
+
+const COOKIE_PREFIX = "zig-beacon-integration-";
 
 // ── Encryption (AES-256-GCM) ──────────────────────────────────────────────
 // Key is derived from CREDENTIALS_SECRET (preferred) or DATABASE_URL so there is
@@ -56,12 +67,70 @@ function decrypt(payload: string): string {
   ]).toString("utf8");
 }
 
+function integrationCookieName(store: string) {
+  return `${COOKIE_PREFIX}${store}`;
+}
+
+async function readCookieIntegration(store: string): Promise<StoredIntegration | null> {
+  try {
+    const jar = await cookies();
+    const raw = jar.get(integrationCookieName(store))?.value;
+    if (!raw) return null;
+    const parsed = JSON.parse(decodeURIComponent(raw)) as {
+      store?: string;
+      config?: string;
+      connected?: boolean;
+      lastSyncedAt?: string | null;
+      lastStatus?: string | null;
+    };
+    if (!parsed.config || !parsed.connected) return null;
+    return {
+      store,
+      config: parsed.config,
+      connected: true,
+      lastSyncedAt: parsed.lastSyncedAt ? new Date(parsed.lastSyncedAt) : null,
+      lastStatus: parsed.lastStatus ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function writeCookieIntegration(row: StoredIntegration) {
+  const jar = await cookies();
+  jar.set(
+    integrationCookieName(row.store),
+    encodeURIComponent(
+      JSON.stringify({
+        store: row.store,
+        config: row.config,
+        connected: row.connected,
+        lastSyncedAt: row.lastSyncedAt?.toISOString() ?? null,
+        lastStatus: row.lastStatus,
+      })
+    ),
+    {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+    }
+  );
+}
+
+async function deleteCookieIntegration(store: string) {
+  const jar = await cookies();
+  jar.delete(integrationCookieName(store));
+}
+
 // ── Read stored config (decrypted) ────────────────────────────────────────
 async function readConfig<T>(store: string): Promise<T | null> {
   const row = await prisma.storeIntegration.findUnique({ where: { store } });
-  if (!row || !row.connected) return null;
+  const saved = row?.connected ? row : await readCookieIntegration(store);
+  if (!saved || !saved.connected) return null;
   try {
-    return JSON.parse(decrypt(row.config)) as T;
+    return JSON.parse(decrypt(saved.config)) as T;
   } catch {
     return null;
   }
@@ -109,6 +178,13 @@ export async function getAppStoreCredentials(): Promise<AppStoreCredentials | nu
 // ── Persist credentials (encrypted) ───────────────────────────────────────
 export async function savePlayCredentials(creds: PlayCredentials) {
   const config = encrypt(JSON.stringify(creds));
+  await writeCookieIntegration({
+    store: "play",
+    config,
+    connected: true,
+    lastSyncedAt: null,
+    lastStatus: null,
+  });
   await prisma.storeIntegration.upsert({
     where: { store: "play" },
     create: { store: "play", config, connected: true },
@@ -118,6 +194,13 @@ export async function savePlayCredentials(creds: PlayCredentials) {
 
 export async function saveAppStoreCredentials(creds: AppStoreCredentials) {
   const config = encrypt(JSON.stringify(creds));
+  await writeCookieIntegration({
+    store: "appstore",
+    config,
+    connected: true,
+    lastSyncedAt: null,
+    lastStatus: null,
+  });
   await prisma.storeIntegration.upsert({
     where: { store: "appstore" },
     create: { store: "appstore", config, connected: true },
@@ -126,12 +209,21 @@ export async function saveAppStoreCredentials(creds: AppStoreCredentials) {
 }
 
 export async function disconnectStore(store: "play" | "appstore") {
+  await deleteCookieIntegration(store);
   await prisma.storeIntegration
     .delete({ where: { store } })
     .catch(() => undefined);
 }
 
 export async function markSync(store: "play" | "appstore", status: string) {
+  const cookieRow = await readCookieIntegration(store);
+  if (cookieRow) {
+    await writeCookieIntegration({
+      ...cookieRow,
+      lastSyncedAt: new Date(),
+      lastStatus: status,
+    });
+  }
   await prisma.storeIntegration
     .update({
       where: { store },
@@ -146,7 +238,25 @@ export async function getIntegrationStatus(): Promise<{
   appStore: IntegrationStatus;
 }> {
   const rows = await prisma.storeIntegration.findMany();
-  const byStore = new Map(rows.map((r) => [r.store, r]));
+  const cookieRows = await Promise.all([
+    readCookieIntegration("play"),
+    readCookieIntegration("appstore"),
+  ]);
+  const byStore = new Map<string, StoredIntegration>(
+    rows.map((r) => [
+      r.store,
+      {
+        store: r.store,
+        config: r.config,
+        connected: r.connected,
+        lastSyncedAt: r.lastSyncedAt,
+        lastStatus: r.lastStatus,
+      },
+    ])
+  );
+  for (const row of cookieRows) {
+    if (row && !byStore.has(row.store)) byStore.set(row.store, row);
+  }
 
   function build(
     store: string,
@@ -163,7 +273,7 @@ export async function getIntegrationStatus(): Promise<{
       }
       return {
         connected: true,
-        source: "database",
+        source: rows.some((item) => item.store === store) ? "database" : "browser",
         lastSyncedAt: row.lastSyncedAt?.toISOString() ?? null,
         lastStatus: row.lastStatus,
         hint,

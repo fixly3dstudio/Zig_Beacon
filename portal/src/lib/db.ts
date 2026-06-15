@@ -160,7 +160,21 @@ const demoComplaints = [
   { id: 5, issue: "Wallet and refund visibility", category: "Payments", volume: 148, trendPct: 9, severity: "medium" },
 ];
 
-const demoSignals = [
+type DemoSignal = {
+  id: number;
+  source: string;
+  category: string;
+  sentiment: string;
+  text: string;
+  createdAt: Date;
+  externalId: string | null;
+  rating: number | null;
+  appVersion: string | null;
+  author: string | null;
+  title: string | null;
+};
+
+let demoSignals: DemoSignal[] = [
   {
     id: 1,
     source: "App Store",
@@ -387,6 +401,43 @@ function createDemoClient() {
     signal: {
       findMany: async (args?: { where?: unknown; orderBy?: unknown; take?: number }) =>
         takeRows(sortRows(filterRows(demoSignals, args?.where), args?.orderBy), args?.take),
+      findUnique: async (args: { where?: { externalId?: string } }) =>
+        demoSignals.find((signal) => signal.externalId === args.where?.externalId) ?? null,
+      update: async (args: { where: { externalId?: string }; data: Record<string, unknown> }) => {
+        const index = demoSignals.findIndex(
+          (signal) => signal.externalId === args.where.externalId
+        );
+        if (index === -1) return null;
+        demoSignals[index] = { ...demoSignals[index], ...args.data };
+        return demoSignals[index];
+      },
+      create: async (args: { data: Record<string, unknown> }) => {
+        const row = {
+          id: Math.max(0, ...demoSignals.map((signal) => signal.id)) + 1,
+          source: String(args.data.source ?? "App Store"),
+          category: String(args.data.category ?? "Reviews"),
+          sentiment: String(args.data.sentiment ?? "neutral"),
+          text: String(args.data.text ?? ""),
+          createdAt:
+            args.data.createdAt instanceof Date ? args.data.createdAt : new Date(),
+          externalId: (args.data.externalId as string | null) ?? null,
+          rating: (args.data.rating as number | null) ?? null,
+          appVersion: (args.data.appVersion as string | null) ?? null,
+          author: (args.data.author as string | null) ?? null,
+          title: (args.data.title as string | null) ?? null,
+        };
+        demoSignals = [row, ...demoSignals];
+        return row;
+      },
+      deleteMany: async (args?: { where?: { externalId?: { startsWith?: string } } }) => {
+        const startsWith = args?.where?.externalId?.startsWith;
+        if (!startsWith) return { count: 0 };
+        const before = demoSignals.length;
+        demoSignals = demoSignals.filter(
+          (signal) => !signal.externalId?.startsWith(startsWith)
+        );
+        return { count: before - demoSignals.length };
+      },
       groupBy: async (args: { by: string[] }) => groupByRows(demoSignals, args.by),
     },
     storeIntegration: {
