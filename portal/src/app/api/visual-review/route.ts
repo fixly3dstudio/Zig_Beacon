@@ -106,6 +106,109 @@ function buildSystemPrompt(analysisType: string) {
   return `${BASE_PROMPT}\n\n${mode}`;
 }
 
+function buildFallbackAnalysis({
+  analysisType,
+  context,
+  imageCount,
+  reason,
+}: {
+  analysisType: string;
+  context: string;
+  imageCount: number;
+  reason: string;
+}) {
+  const contextLine = context.trim()
+    ? `The team context says: "${context.trim()}".`
+    : "No extra team context was provided.";
+
+  if (analysisType === "Beacon Score review") {
+    return `## Feature / flow detected
+${imageCount} screen${imageCount === 1 ? "" : "s"} were uploaded for a Beacon Score review. ${contextLine}
+
+## Flow walkthrough
+The visual AI service is currently unavailable, so this limited review cannot inspect exact UI elements. Use this as a triage template until the vision model is available:
+
+1. Identify the entry point, primary action, confirmation state, and any error or loading state.
+2. Check whether every screen makes the next step obvious.
+3. Confirm that pricing, pickup, payment, support, and safety information are visible before commitment.
+4. Verify that the final state tells the rider what happened and what to do next.
+
+## Beacon Score
+Overall provisional score: 62 / 100
+
+- Usability clarity: 65 / 100 - needs screen-level validation once the vision model is online.
+- Conversion confidence: 60 / 100 - confirm that the user can complete the flow without ambiguity.
+- Trust and safety: 58 / 100 - check whether support, safety, driver, fare, and cancellation details are visible.
+- Reliability expectation: 62 / 100 - confirm loading, error, and fallback states.
+- Support deflection: 55 / 100 - add self-explanatory copy where users usually contact support.
+- Competitive parity: 70 / 100 - compare against Grab, Gojek, TADA, and inDrive for the same journey.
+
+## Product impact
+This upload is saved for Product Health review. Once the vision model is available, rerun the training session to produce the detailed screen-by-screen score and connect it more tightly to Beacon Score, complaints, and Opportunity Hub.
+
+## UX fixes before build
+- Add all missing states: empty, loading, failure, retry, confirmation, and cancellation.
+- Make the primary action and next step obvious on every screen.
+- Surface fare, pickup, payment, safety, and support information before commitment.
+- Reduce copy ambiguity around driver allocation, availability, cancellation, and refunds.
+
+## Final recommendation
+Needs iteration. This is a fallback analysis because ${reason}`;
+  }
+
+  return `## What this screen does
+${imageCount} screen${imageCount === 1 ? "" : "s"} were uploaded for "${analysisType}". ${contextLine}
+
+## Step-by-step walkthrough
+The vision model is currently unavailable, so the portal cannot inspect exact pixels right now. Use this limited training pass to structure the review:
+
+1. Name the user job this flow supports.
+2. Map the first screen, decision screen, action screen, and final state.
+3. Mark any missing loading, error, permission, empty, or confirmation states.
+4. Compare the flow against the equivalent Zig or competitor journey.
+
+## Design patterns to check
+- Clear page title and current task.
+- One obvious primary action per screen.
+- Progressive disclosure for secondary details.
+- Trust cues for price, driver, pickup, payment, safety, and support.
+- Recovery paths for failed booking, failed payment, unavailable supply, or app errors.
+
+## Key lessons
+- A usable mobility flow must explain what is happening before the rider commits.
+- The best screens reduce support tickets by clarifying fare, timing, cancellation, and next steps.
+- Screens should be reviewed as a journey, not as isolated UI snapshots.
+
+## Note
+This is a fallback analysis because ${reason} Rerun the training session when Ollama and the configured vision model are available for full visual inspection.`;
+}
+
+async function saveFallbackUpload({
+  section,
+  analysisType,
+  context,
+  imageUrls,
+  analysis,
+}: {
+  section: ReturnType<typeof sectionForMode>;
+  analysisType: string;
+  context: string;
+  imageUrls: string[];
+  analysis: string;
+}) {
+  try {
+    await createVisualUpload({
+      section,
+      analysisType,
+      context,
+      images: imageUrls,
+      analysis,
+    });
+  } catch {
+    // Persistence should not block the training response.
+  }
+}
+
 export async function POST(req: NextRequest) {
   let formData: FormData;
   try {
@@ -165,21 +268,42 @@ export async function POST(req: NextRequest) {
       }),
     });
   } catch {
-    return NextResponse.json(
-      {
-        error:
-          `Ollama is not reachable. Make sure it's running with \`ollama serve\` and that the vision model is pulled (\`ollama pull ${VISION_MODEL}\`).`,
+    const fallback = buildFallbackAnalysis({
+      analysisType,
+      context,
+      imageCount: files.length,
+      reason: `Ollama is not reachable at ${OLLAMA_BASE}.`,
+    });
+    await saveFallbackUpload({ section, analysisType, context, imageUrls, analysis: fallback });
+    return new Response(fallback, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "X-Content-Type-Options": "nosniff",
+        "X-Upload-Section": section,
+        "X-Upload-Section-Label": SECTION_LABEL[section],
+        "X-AI-Fallback": "true",
       },
-      { status: 503 }
-    );
+    });
   }
 
   if (!ollamaRes.ok) {
     const text = await ollamaRes.text().catch(() => "unknown error");
-    return NextResponse.json(
-      { error: `Ollama returned ${ollamaRes.status}: ${text}` },
-      { status: 502 }
-    );
+    const fallback = buildFallbackAnalysis({
+      analysisType,
+      context,
+      imageCount: files.length,
+      reason: `Ollama returned ${ollamaRes.status}: ${text.slice(0, 180)}`,
+    });
+    await saveFallbackUpload({ section, analysisType, context, imageUrls, analysis: fallback });
+    return new Response(fallback, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "X-Content-Type-Options": "nosniff",
+        "X-Upload-Section": section,
+        "X-Upload-Section-Label": SECTION_LABEL[section],
+        "X-AI-Fallback": "true",
+      },
+    });
   }
 
   const encoder = new TextEncoder();

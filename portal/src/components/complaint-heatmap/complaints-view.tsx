@@ -214,8 +214,10 @@ export function ComplaintsView({
 }: ComplaintsViewProps) {
   const [tab, setTab] = useState<"voices" | "reports">("voices");
   const [activeSource, setActiveSource] = useState("All");
-  const [liveSignals, setLiveSignals] = useState<ComplaintSignal[] | null>(null);
-  const [liveClusters, setLiveClusters] = useState<ComplaintClusterItem[] | null>(null);
+  const [appStoreSignals, setAppStoreSignals] = useState<ComplaintSignal[]>([]);
+  const [appStoreClusters, setAppStoreClusters] = useState<ComplaintClusterItem[]>([]);
+  const [redditSignals, setRedditSignals] = useState<ComplaintSignal[]>([]);
+  const [redditClusters, setRedditClusters] = useState<ComplaintClusterItem[]>([]);
 
   useEffect(() => {
     const appstore = getBrowserIntegrations().appstore;
@@ -234,14 +236,42 @@ export function ComplaintsView({
         const reviews = data.reviews ?? [];
         const nextSignals = complaintSignalsFromReviews(reviews);
         const nextClusters = complaintClustersFromReviews(reviews);
-        if (nextSignals.length > 0) setLiveSignals(nextSignals);
-        if (nextClusters.length > 0) setLiveClusters(nextClusters);
+        if (nextSignals.length > 0) setAppStoreSignals(nextSignals);
+        if (nextClusters.length > 0) setAppStoreClusters(nextClusters);
       })
       .catch(() => undefined);
   }, []);
 
-  const activeSignals = liveSignals ?? signals;
-  const activeClusters = liveClusters ?? clusters;
+  useEffect(() => {
+    fetch("/api/reddit-signals")
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Could not load Reddit signals.");
+        return (await response.json()) as {
+          signals?: ComplaintSignal[];
+          clusters?: ComplaintClusterItem[];
+        };
+      })
+      .then((data) => {
+        setRedditSignals(data.signals ?? []);
+        setRedditClusters(data.clusters ?? []);
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const activeSignals = useMemo(() => {
+    const byId = new Map<string, ComplaintSignal>();
+    for (const signal of [...signals, ...appStoreSignals, ...redditSignals]) {
+      byId.set(`${signal.source}:${signal.id}:${signal.text}`, signal);
+    }
+    return Array.from(byId.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [appStoreSignals, redditSignals, signals]);
+
+  const activeClusters = useMemo(
+    () => [...clusters, ...appStoreClusters, ...redditClusters].sort((a, b) => b.volume - a.volume),
+    [appStoreClusters, clusters, redditClusters]
+  );
   const activeSources = useMemo(
     () => Array.from(new Set(activeSignals.map((signal) => signal.source))),
     [activeSignals]
