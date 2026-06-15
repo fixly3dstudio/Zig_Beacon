@@ -2,10 +2,8 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   Building2,
-  CarTaxiFront,
   CircleDollarSign,
   Globe2,
-  Landmark,
   Plane,
   ShieldCheck,
   Zap,
@@ -302,10 +300,6 @@ const regionCounts = markets.reduce<Record<string, number>>((acc, market) => {
   return acc;
 }, {});
 
-const averageMomentum = Math.round(
-  markets.reduce((sum, market) => sum + market.momentum, 0) / markets.length
-);
-
 function regulationClass(regulation: Market["regulation"]) {
   if (regulation === "Open") return "border-track bg-background text-foreground";
   if (regulation === "Managed") return "border-brand/20 bg-brand/10 text-brand";
@@ -354,49 +348,7 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="p-5">
-          <CardLabel>Market momentum</CardLabel>
-          <div className="mt-3 flex items-end justify-between">
-            <p className="text-3xl font-semibold tracking-tight text-foreground tabular-nums">
-              {averageMomentum}
-            </p>
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-brand">
-              <ArrowUpRight size={14} />
-              rising
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-muted">
-            Average demand and product activity index
-          </p>
-        </Card>
-        <Card className="p-5">
-          <CardLabel>Taxi-integrated leaders</CardLabel>
-          <div className="mt-3 flex items-end justify-between">
-            <p className="text-3xl font-semibold tracking-tight text-foreground tabular-nums">
-              {markets.filter((market) => market.taxiIntegration >= 85).length}
-            </p>
-            <CarTaxiFront size={22} className="text-muted" />
-          </div>
-          <p className="mt-1 text-xs text-muted">
-            Markets where licensed fleets anchor supply
-          </p>
-        </Card>
-        <Card className="p-5">
-          <CardLabel>Managed regulation</CardLabel>
-          <div className="mt-3 flex items-end justify-between">
-            <p className="text-3xl font-semibold tracking-tight text-brand tabular-nums">
-              {markets.filter((market) => market.regulation === "Managed").length}
-            </p>
-            <Landmark size={22} className="text-muted" />
-          </div>
-          <p className="mt-1 text-xs text-muted">
-            Comparable environments for Zig expansion logic
-          </p>
-        </Card>
-      </div>
-
-      <div className="mt-6 grid grid-cols-12 gap-5">
+      <div className="mt-8 grid grid-cols-12 gap-5">
         <Card className="col-span-12 lg:col-span-8">
           <div className="flex items-start justify-between gap-4">
             <div>

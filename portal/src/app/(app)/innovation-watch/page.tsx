@@ -4,7 +4,6 @@ import {
   BadgeCheck,
   BellRing,
   Brain,
-  Clock3,
   CreditCard,
   Gauge,
   Lightbulb,
@@ -12,7 +11,6 @@ import {
   Radar,
   Route,
   ShieldCheck,
-  Sparkles,
   Zap,
 } from "lucide-react";
 import { Card, CardLabel } from "@/components/ui/card";
@@ -184,13 +182,6 @@ const watchItems: WatchItem[] = [
 const stageOrder: Stage[] = ["Live", "Pilot", "Emerging", "Watch"];
 const horizonOrder: Horizon[] = ["Now", "Next", "Later"];
 
-const highImpact = innovations.filter((item) => item.impact >= 75).length;
-const nearTerm = innovations.filter((item) => item.horizon === "Now").length;
-const avgConfidence = Math.round(
-  innovations.reduce((sum, item) => sum + item.confidence, 0) /
-    innovations.length
-);
-
 const rankedInnovations = [...innovations].sort((a, b) => {
   const aScore = a.impact * a.confidence - a.effort * 35;
   const bScore = b.impact * b.confidence - b.effort * 35;
@@ -252,49 +243,7 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="p-5">
-          <CardLabel>High-impact signals</CardLabel>
-          <div className="mt-3 flex items-end justify-between">
-            <p className="text-3xl font-semibold tracking-tight text-foreground tabular-nums">
-              {highImpact}
-            </p>
-            <Sparkles size={22} className="text-muted" />
-          </div>
-          <p className="mt-1 text-xs text-muted">
-            Ideas scoring 75+ on rider or business impact
-          </p>
-        </Card>
-        <Card className="p-5">
-          <CardLabel>Near-term bets</CardLabel>
-          <div className="mt-3 flex items-end justify-between">
-            <p className="text-3xl font-semibold tracking-tight text-brand tabular-nums">
-              {nearTerm}
-            </p>
-            <Clock3 size={22} className="text-muted" />
-          </div>
-          <p className="mt-1 text-xs text-muted">
-            Ready to evaluate in the next roadmap window
-          </p>
-        </Card>
-        <Card className="p-5">
-          <CardLabel>Signal confidence</CardLabel>
-          <div className="mt-3 flex items-end justify-between">
-            <p className="text-3xl font-semibold tracking-tight text-foreground tabular-nums">
-              {avgConfidence}
-            </p>
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-brand">
-              <ArrowUpRight size={14} />
-              improving
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-muted">
-            Average confidence across benchmarked patterns
-          </p>
-        </Card>
-      </div>
-
-      <div className="mt-6 grid grid-cols-12 gap-5">
+      <div className="mt-8 grid grid-cols-12 gap-5">
         <Card className="col-span-12 lg:col-span-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
