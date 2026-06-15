@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowDownRight,
@@ -16,6 +16,12 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { getBrowserIntegrations } from "@/lib/reviews/browser-credentials";
+import {
+  complaintClustersFromReviews,
+  complaintSignalsFromReviews,
+  type ReviewComplaintSource,
+} from "@/lib/reviews/complaint-derive";
 
 export type ComplaintSignal = {
   id: number;
@@ -73,25 +79,57 @@ export function ComplaintsView({
 }: ComplaintsViewProps) {
   const [tab, setTab] = useState<"voices" | "reports">("voices");
   const [activeSource, setActiveSource] = useState("All");
+  const [liveSignals, setLiveSignals] = useState<ComplaintSignal[] | null>(null);
+  const [liveClusters, setLiveClusters] = useState<ComplaintClusterItem[] | null>(null);
+
+  useEffect(() => {
+    const appstore = getBrowserIntegrations().appstore;
+    if (!appstore) return;
+
+    fetch("/api/reviews/app-store-live", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(appstore),
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Could not load App Store reviews.");
+        return (await response.json()) as { reviews?: ReviewComplaintSource[] };
+      })
+      .then((data) => {
+        const reviews = data.reviews ?? [];
+        const nextSignals = complaintSignalsFromReviews(reviews);
+        const nextClusters = complaintClustersFromReviews(reviews);
+        if (nextSignals.length > 0) setLiveSignals(nextSignals);
+        if (nextClusters.length > 0) setLiveClusters(nextClusters);
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const activeSignals = liveSignals ?? signals;
+  const activeClusters = liveClusters ?? clusters;
+  const activeSources = useMemo(
+    () => Array.from(new Set(activeSignals.map((signal) => signal.source))),
+    [activeSignals]
+  );
 
   const filteredSignals = useMemo(
     () =>
-      signals.filter(
+      activeSignals.filter(
         (s) => activeSource === "All" || s.source === activeSource
       ),
-    [activeSource, signals]
+    [activeSource, activeSignals]
   );
 
   // Top themes ranked by cluster volume
   const themes = useMemo(
-    () => [...clusters].sort((a, b) => b.volume - a.volume).slice(0, 5),
-    [clusters]
+    () => [...activeClusters].sort((a, b) => b.volume - a.volume).slice(0, 5),
+    [activeClusters]
   );
 
   // Reports tab: clusters grouped by feature area
   const reportGroups = useMemo(() => {
     const groups = new Map<string, ComplaintClusterItem[]>();
-    for (const c of clusters) {
+    for (const c of activeClusters) {
       const arr = groups.get(c.category) ?? [];
       arr.push(c);
       groups.set(c.category, arr);
@@ -108,9 +146,9 @@ export function ComplaintsView({
         high: items.filter((i) => i.severity === "high").length,
       }))
       .sort((a, b) => b.volume - a.volume);
-  }, [clusters]);
+  }, [activeClusters]);
 
-  const maxClusterVolume = Math.max(1, ...clusters.map((c) => c.volume));
+  const maxClusterVolume = Math.max(1, ...activeClusters.map((c) => c.volume));
   const maxGroupVolume = Math.max(1, ...reportGroups.map((g) => g.volume));
 
   return (
@@ -151,12 +189,12 @@ export function ComplaintsView({
           >
             {/* Medium tabs */}
             <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
-              {["All", ...sources].map((source) => {
+              {["All", ...activeSources].map((source) => {
                 const active = activeSource === source;
                 const count =
                   source === "All"
-                    ? signals.length
-                    : signals.filter((s) => s.source === source).length;
+                    ? activeSignals.length
+                    : activeSignals.filter((s) => s.source === source).length;
                 const Icon = sourceIcons[source] ?? MessageSquareText;
                 return (
                   <button

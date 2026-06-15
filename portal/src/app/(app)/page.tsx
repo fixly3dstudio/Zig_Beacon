@@ -12,6 +12,7 @@ import { CountUp } from "@/components/dashboard/count-up";
 import { AnimatedBar } from "@/components/dashboard/animated-bar";
 import { Sparkline } from "@/components/dashboard/sparkline";
 import { ImpactEffortMatrix } from "@/components/dashboard/impact-effort-matrix";
+import { LiveTopComplaints } from "@/components/dashboard/live-top-complaints";
 import { UploadsPanelServer } from "@/components/visual-review/uploads-panel-server";
 
 export const dynamic = "force-dynamic";
@@ -359,55 +360,16 @@ export default async function Home() {
           </div>
         </Card>
 
-        {/* Top complaints */}
-        <Card className="col-span-12 lg:col-span-7">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[15px] font-medium text-foreground">Top complaints</h2>
-            <ViewLink href="/complaint-heatmap" />
-          </div>
-          <ul className="mt-4 space-y-1">
-            {topComplaints.map((c, i) => {
-              const rising = c.trendPct >= 0;
-              const sevColor =
-                c.severity === "high" ? RED : c.severity === "medium" ? AMBER : "var(--muted)";
-              const share = totalComplaintVolume
-                ? Math.round((c.volume / totalComplaintVolume) * 100)
-                : 0;
-              return (
-                <li
-                  key={c.id}
-                  className="flex items-center gap-3 border-b border-border/60 py-3 last:border-0"
-                >
-                  <span className="w-4 text-[13px] tabular-nums text-muted">{i + 1}</span>
-                  <span
-                    className="h-2 w-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: sevColor }}
-                    title={`${c.severity} severity`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-medium text-foreground">{c.issue}</p>
-                    <span className="text-[11px] text-muted">
-                      {c.category} · {share}% of all volume
-                    </span>
-                  </div>
-                  <span className="text-[13px] tabular-nums text-muted">
-                    {c.volume.toLocaleString()}
-                  </span>
-                  <span
-                    className={cn(
-                      "inline-flex w-14 items-center justify-end gap-0.5 text-xs font-medium tabular-nums",
-                      rising ? "text-[var(--danger)]" : "text-brand"
-                    )}
-                  >
-                    {rising ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
-                    {rising ? "+" : ""}
-                    {Math.round(c.trendPct)}%
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </Card>
+        <LiveTopComplaints
+          fallback={topComplaints.map((complaint) => ({
+            id: complaint.id,
+            issue: complaint.issue,
+            category: complaint.category,
+            volume: complaint.volume,
+            trendPct: complaint.trendPct,
+            severity: complaint.severity,
+          }))}
+        />
 
         {/* Impact / effort matrix */}
         <Card className="col-span-12 lg:col-span-5">
