@@ -272,6 +272,31 @@ const demoOpportunities = [
   { id: 4, problem: "Wallet refund visibility", evidence: "Payments complaints mention missing credit clarity.", impact: 6, frequency: 6, reach: 6, effort: 3, status: "backlog", owner: "Payments" },
 ];
 
+const demoVisualUploads = [
+  {
+    id: "demo-upload-1",
+    section: "product-health",
+    analysisType: "Beacon Score review",
+    context: "Promo checkout flow review",
+    analysis:
+      "Beacon Score impact: improves satisfaction and adoption if promo discovery is made automatic at checkout.",
+    images: [],
+    imageCount: 0,
+    createdAt: now,
+  },
+  {
+    id: "demo-upload-2",
+    section: "competitors",
+    analysisType: "Competitor teardown",
+    context: "Grab promo placement benchmark",
+    analysis:
+      "Competitor signal: clearer discount state and fewer manual entry steps reduce booking friction.",
+    images: [],
+    imageCount: 0,
+    createdAt: new Date("2026-06-11T08:00:00.000Z"),
+  },
+];
+
 function sortRows<T extends Record<string, unknown>>(rows: T[], orderBy: unknown) {
   const order = Array.isArray(orderBy) ? orderBy[0] : orderBy;
   if (!order || typeof order !== "object") return rows;
@@ -377,6 +402,24 @@ function createDemoClient() {
     },
     opportunity: {
       findMany: async () => demoOpportunities,
+    },
+    visualUpload: {
+      findMany: async (args?: { where?: unknown; orderBy?: unknown; take?: number }) =>
+        takeRows(
+          sortRows(filterRows(demoVisualUploads, args?.where), args?.orderBy),
+          args?.take
+        ),
+      count: async () => demoVisualUploads.length,
+      create: async (args: { data: Record<string, unknown> }) => ({
+        id: "demo-upload-created",
+        section: String(args.data.section ?? "product-health"),
+        analysisType: String(args.data.analysisType ?? "Beacon Score review"),
+        context: (args.data.context as string | null) ?? null,
+        analysis: String(args.data.analysis ?? ""),
+        images: Array.isArray(args.data.images) ? (args.data.images as string[]) : [],
+        imageCount: Number(args.data.imageCount ?? 0),
+        createdAt: new Date(),
+      }),
     },
     chatMessage: {
       create: async () => null,
