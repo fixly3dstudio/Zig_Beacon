@@ -8,15 +8,18 @@ import {
   Calendar,
   CheckCircle2,
   ChevronDown,
+  ExternalLink,
   Loader2,
   Play,
   RefreshCw,
   Star,
+  Ticket,
 } from "lucide-react";
 import { Card, CardLabel } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { syncReviewsAction, type SyncActionResult } from "@/app/(app)/reviews/actions";
 import { getBrowserIntegrations } from "@/lib/reviews/browser-credentials";
+import { JiraTicketModal } from "@/components/reviews/jira-ticket-modal";
 
 export type ReviewItem = {
   id: number;
@@ -29,11 +32,13 @@ export type ReviewItem = {
   category: string;
   sentiment: string;
   createdAt: string;
+  jiraKey: string | null;
 };
 
 type ReviewsViewProps = {
   reviews: ReviewItem[];
   configured: { playStore: boolean; appStore: boolean };
+  jiraBaseUrl: string | null;
 };
 
 const RED = "var(--danger)";
@@ -85,12 +90,13 @@ function rangeCutoff(value: string): number | null {
   return days ? Date.now() - days * 86400000 : null;
 }
 
-export function ReviewsView({ reviews, configured }: ReviewsViewProps) {
+export function ReviewsView({ reviews, configured, jiraBaseUrl }: ReviewsViewProps) {
   const [displayedReviews, setDisplayedReviews] = useState(reviews);
   const [connection, setConnection] = useState(configured);
   const [storeFilter, setStoreFilter] = useState<"All" | "App Store" | "Play Store">("All");
   const [ratingFilter, setRatingFilter] = useState<number | "All">("All");
   const [rangeFilter, setRangeFilter] = useState("all");
+  const [ticketReview, setTicketReview] = useState<ReviewItem | null>(null);
   const [isPending, startTransition] = useTransition();
   const [syncResult, setSyncResult] = useState<SyncActionResult | null>(null);
 
@@ -443,7 +449,7 @@ export function ReviewsView({ reviews, configured }: ReviewsViewProps) {
               <p className="mt-3 text-sm font-semibold text-foreground">{review.title}</p>
             )}
             <p className="mt-1.5 text-[14px] leading-7 text-foreground/90">{review.body}</p>
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <span
                 className={cn(
                   "inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium capitalize",
@@ -455,6 +461,35 @@ export function ReviewsView({ reviews, configured }: ReviewsViewProps) {
               <span className="rounded-full bg-elevated px-2 py-0.5 text-[11px] text-muted">
                 {review.category}
               </span>
+
+              {review.jiraKey ? (
+                jiraBaseUrl ? (
+                  <a
+                    href={`${jiraBaseUrl}/browse/${review.jiraKey}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-[11px] font-medium text-success"
+                  >
+                    <Ticket size={12} />
+                    {review.jiraKey}
+                    <ExternalLink size={11} />
+                  </a>
+                ) : (
+                  <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-[11px] font-medium text-success">
+                    <Ticket size={12} />
+                    {review.jiraKey}
+                  </span>
+                )
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setTicketReview(review)}
+                  className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-muted transition-colors hover:border-brand/40 hover:text-brand"
+                >
+                  <Ticket size={12} />
+                  Create Jira ticket
+                </button>
+              )}
             </div>
           </motion.div>
         ))}
@@ -468,6 +503,18 @@ export function ReviewsView({ reviews, configured }: ReviewsViewProps) {
           </div>
         )}
       </div>
+
+      {ticketReview && (
+        <JiraTicketModal
+          review={ticketReview}
+          onClose={() => setTicketReview(null)}
+          onCreated={(key) =>
+            setDisplayedReviews((prev) =>
+              prev.map((r) => (r.id === ticketReview.id ? { ...r, jiraKey: key } : r))
+            )
+          }
+        />
+      )}
     </div>
   );
 }

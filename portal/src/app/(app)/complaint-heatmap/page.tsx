@@ -9,19 +9,6 @@ export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Complaints — Zig Beacon" };
 
-const sourceOrder = ["App Store", "Play Store", "Reddit", "Support", "Twitter"];
-
-function sortByKnownOrder(values: string[]) {
-  return [...values].sort((a, b) => {
-    const aIndex = sourceOrder.indexOf(a);
-    const bIndex = sourceOrder.indexOf(b);
-    return (
-      (aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex) -
-      (bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex)
-    );
-  });
-}
-
 export default async function Page() {
   const [signalsRaw, clustersRaw] = await Promise.all([
     prisma.signal.findMany({
@@ -39,6 +26,7 @@ export default async function Page() {
     category: signal.category,
     sentiment: signal.sentiment,
     text: signal.text,
+    rating: signal.rating ?? null,
     createdAt: signal.createdAt.toISOString(),
   }));
 
@@ -49,11 +37,10 @@ export default async function Page() {
     volume: cluster.volume,
     trendPct: cluster.trendPct,
     severity: cluster.severity,
+    rootCause: cluster.rootCause ?? null,
+    fix: cluster.fix ?? null,
   }));
 
-  const sources = sortByKnownOrder(
-    Array.from(new Set(signals.map((signal) => signal.source)))
-  );
   return (
     <div>
       <div className="mb-6">
@@ -66,7 +53,7 @@ export default async function Page() {
         </p>
       </div>
 
-      <ComplaintsView clusters={clusters} signals={signals} sources={sources} />
+      <ComplaintsView clusters={clusters} signals={signals} />
     </div>
   );
 }

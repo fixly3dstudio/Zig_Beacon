@@ -5,7 +5,8 @@ import {
   BriefcaseBusiness,
   CircleDollarSign,
   Clock3,
-  Gauge,
+  Flame,
+  Sparkles,
   Target,
   TrendingUp,
 } from "lucide-react";
@@ -15,6 +16,25 @@ import { Card, CardLabel } from "@/components/ui/card";
 import { UploadsPanelServer } from "@/components/visual-review/uploads-panel-server";
 
 export const dynamic = "force-dynamic";
+
+const STORE_SOURCES = ["App Store", "Play Store"];
+
+// Map an opportunity to the product module it addresses (order matters — the
+// first match wins) so we can weight it by that module's app-review pressure.
+const MODULE_RULES: { module: string; re: RegExp }[] = [
+  { module: "Promotions", re: /\b(promo|promotion|voucher|discount)\b/i },
+  { module: "Airport", re: /\b(airport|flight|changi|terminal)\b/i },
+  { module: "Rewards", re: /\b(loyalty|reward|points|tier)\b/i },
+  { module: "Booking", re: /\b(ride selection|rebook|booking|book|cancel|driver|pickup)\b/i },
+  { module: "Payments", re: /\b(receipt|payment|checkout|card|qr|fare|billing)\b/i },
+  { module: "Account", re: /\b(family|account|login|profile)\b/i },
+  { module: "Technical", re: /\b(crash|bug|performance|reliab)\b/i },
+];
+
+function classifyModule(problem: string): string {
+  for (const rule of MODULE_RULES) if (rule.re.test(problem)) return rule.module;
+  return "Other";
+}
 
 const ENGINEER_MONTH_COST = 22000;
 const DESIGN_MONTH_COST = 16000;
@@ -42,6 +62,10 @@ type OpportunityWithBusiness = {
   confidence: number;
   teamMonths: number;
   action: string;
+  module: string;
+  reviewDemand: number;
+  negReviews: number;
+  planFirstScore: number;
 };
 
 function currency(value: number) {
@@ -161,20 +185,53 @@ function estimateBusinessCase(opportunity: {
 }
 
 export default async function Page() {
-  const opportunities = await prisma.opportunity.findMany();
+  const [opportunities, storeReviews, clusters] = await Promise.all([
+    prisma.opportunity.findMany(),
+    prisma.signal.findMany({
+      where: { source: { in: STORE_SOURCES }, sentiment: "negative" },
+      select: { category: true },
+    }),
+    prisma.complaintCluster.findMany({ select: { category: true, volume: true } }),
+  ]);
+
+  // App-review pressure per module: complaint volume + negative store reviews.
+  const moduleComplaintVolume = new Map<string, number>();
+  for (const c of clusters) {
+    moduleComplaintVolume.set(c.category, (moduleComplaintVolume.get(c.category) ?? 0) + c.volume);
+  }
+  const moduleNegReviews = new Map<string, number>();
+  for (const r of storeReviews) {
+    moduleNegReviews.set(r.category, (moduleNegReviews.get(r.category) ?? 0) + 1);
+  }
+  const maxModuleVolume = Math.max(1, ...moduleComplaintVolume.values());
 
   const enriched: OpportunityWithBusiness[] = opportunities
-    .map((opportunity) => ({
-      ...opportunity,
-      ...estimateBusinessCase(opportunity),
-    }))
+    .map((opportunity) => {
+      const business = estimateBusinessCase(opportunity);
+      const moduleName = classifyModule(opportunity.problem);
+      const reviewDemand = moduleComplaintVolume.get(moduleName) ?? 0;
+      const negReviews = moduleNegReviews.get(moduleName) ?? 0;
+      // Weight the value/effort score by how loudly reviews are demanding this module.
+      const demandShare = reviewDemand / maxModuleVolume;
+      const planFirstScore = Math.round(business.priorityScore * (1 + demandShare));
+      return {
+        ...opportunity,
+        ...business,
+        module: moduleName,
+        reviewDemand,
+        negReviews,
+        planFirstScore,
+      };
+    })
     .sort((a, b) => {
       if (a.status === "shipped" && b.status !== "shipped") return 1;
       if (a.status !== "shipped" && b.status === "shipped") return -1;
-      return b.priorityScore - a.priorityScore;
+      return b.planFirstScore - a.planFirstScore;
     });
 
   const open = enriched.filter((opportunity) => opportunity.status !== "shipped");
+  const planFirst = open[0];
+  const maxReviewDemand = Math.max(1, ...enriched.map((o) => o.reviewDemand));
   const totalSpend = open.reduce((sum, opportunity) => sum + opportunity.devSpend, 0);
   const totalRevenue = open.reduce(
     (sum, opportunity) => sum + opportunity.annualRevenue,
@@ -205,7 +262,56 @@ export default async function Page() {
         </div>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-4">
+      {/* Plan first — review-driven recommendation */}
+      {planFirst && (
+        <Card className="mt-6 border-brand/30 bg-brand/5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand text-background">
+                <Sparkles size={20} />
+              </div>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-brand">
+                    Plan first
+                  </p>
+                  <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-background">
+                    {planFirst.module}
+                  </span>
+                </div>
+                <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
+                  {planFirst.problem}
+                </h2>
+                <p className="mt-1.5 text-[13px] leading-6 text-foreground/90">
+                  Highest plan-first score because reviews are loudest here —{" "}
+                  <span className="font-semibold">
+                    {planFirst.reviewDemand.toLocaleString()} complaints
+                  </span>
+                  {planFirst.negReviews > 0
+                    ? ` and ${planFirst.negReviews} negative app store review${planFirst.negReviews === 1 ? "" : "s"}`
+                    : ""}{" "}
+                  about <span className="font-semibold">{planFirst.module}</span>, with{" "}
+                  {planFirst.roi.toFixed(1)}x ROI and {planFirst.paybackMonths}-month payback.
+                </p>
+              </div>
+            </div>
+            <div className="grid shrink-0 grid-cols-3 gap-2.5 sm:max-w-md lg:w-80">
+              {[
+                { label: "Plan-first", value: planFirst.planFirstScore.toLocaleString() },
+                { label: "Annual upside", value: currency(planFirst.annualRevenue) },
+                { label: "Payback", value: `${planFirst.paybackMonths} mo` },
+              ].map((d) => (
+                <div key={d.label} className="rounded-xl border border-border bg-background p-3 text-center">
+                  <p className="text-[11px] text-muted">{d.label}</p>
+                  <p className="mt-1 text-sm font-semibold tabular-nums text-foreground">{d.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
+
+      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
         <Card className="p-5">
           <CardLabel>Estimated build spend</CardLabel>
           <p className="mt-3 text-3xl font-semibold tracking-tight text-foreground tabular-nums">
@@ -247,22 +353,25 @@ export default async function Page() {
             <div>
               <CardLabel>Opportunity portfolio</CardLabel>
               <h2 className="mt-2 text-lg font-semibold tracking-tight text-foreground">
-                Ranked by product value and commercial return
+                Plan order — app-review demand weighted by value &amp; return
               </h2>
             </div>
             <span className="inline-flex w-fit items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs text-muted">
-              <Gauge size={14} />
-              Impact x Frequency x Reach / Effort
+              <Flame size={14} className="text-brand" />
+              Review demand × (Impact × Frequency × Reach / Effort)
             </span>
           </div>
 
           <div className="mt-5 overflow-hidden rounded-lg border border-border">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1180px] border-collapse text-sm">
+              <table className="w-full min-w-[1320px] border-collapse text-sm">
                 <thead className="bg-surface">
                   <tr className="border-b border-border">
                     <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted">
                       Opportunity
+                    </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted">
+                      Review demand
                     </th>
                     <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-muted">
                       Score
@@ -305,6 +414,27 @@ export default async function Page() {
                             Owner: {opportunity.owner ?? "Unassigned"}
                           </p>
                         </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <p className="text-[13px] font-medium text-foreground">
+                          {opportunity.module}
+                        </p>
+                        <div className="mt-1.5 flex items-center gap-2">
+                          <div className="h-1.5 w-20 overflow-hidden rounded-full bg-track">
+                            <div
+                              className="h-full rounded-full bg-foreground"
+                              style={{ width: `${(opportunity.reviewDemand / maxReviewDemand) * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-[11px] tabular-nums text-muted">
+                            {opportunity.reviewDemand.toLocaleString()}
+                          </span>
+                        </div>
+                        {opportunity.negReviews > 0 && (
+                          <p className="mt-1 text-[11px] text-muted">
+                            {opportunity.negReviews} app review{opportunity.negReviews === 1 ? "" : "s"}
+                          </p>
+                        )}
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">

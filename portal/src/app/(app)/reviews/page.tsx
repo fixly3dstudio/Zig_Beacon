@@ -31,6 +31,7 @@ export default async function ReviewsPage() {
     category: r.category,
     sentiment: r.sentiment,
     createdAt: r.createdAt.toISOString(),
+    jiraKey: r.jiraKey ?? null,
   }));
 
   const liveAppStoreReviews: ReviewItem[] = appStore
@@ -47,6 +48,7 @@ export default async function ReviewsPage() {
             category: categoryFromText(`${review.title ?? ""} ${review.body}`),
             sentiment: sentimentFromRating(review.rating),
             createdAt: review.submittedAt.toISOString(),
+            jiraKey: null,
           }))
         )
         .catch(() => [])
@@ -72,6 +74,7 @@ export default async function ReviewsPage() {
         playStore: Boolean(play),
         appStore: Boolean(appStore),
       }}
+      jiraBaseUrl={process.env.JIRA_BASE_URL?.replace(/\/+$/, "") ?? null}
     />
   );
 }

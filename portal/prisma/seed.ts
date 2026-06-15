@@ -265,14 +265,14 @@ async function main() {
   await prisma.complaintCluster.deleteMany();
   await prisma.complaintCluster.createMany({
     data: [
-      { issue: "Promotions not applied automatically", category: "Promotions", volume: 847, trendPct: 34, severity: "high" },
-      { issue: "Ride selection UI unclear", category: "Booking", volume: 612, trendPct: 12, severity: "high" },
-      { issue: "Long ETA at airport terminal", category: "Airport", volume: 489, trendPct: 8, severity: "high" },
-      { issue: "Payment flow has too many steps", category: "Payments", volume: 331, trendPct: 18, severity: "medium" },
-      { issue: "Driver cancellations before pickup", category: "Booking", volume: 278, trendPct: 22, severity: "high" },
-      { issue: "App crashes on older Android devices", category: "Technical", volume: 196, trendPct: 5, severity: "medium" },
-      { issue: "Receipt emails not received", category: "Payments", volume: 143, trendPct: -3, severity: "low" },
-      { issue: "Reward points expiring unnoticed", category: "Rewards", volume: 118, trendPct: 41, severity: "medium" },
+      { issue: "Promotions not applied automatically", category: "Promotions", volume: 847, trendPct: 34, severity: "high", rootCause: "Promo codes must be entered manually at checkout — users don't discover or remember them, and the best available promo isn't auto-selected.", fix: "Auto-apply the best eligible promo at checkout; show an 'applied promo' line in the fare breakdown; surface available promos on the confirm screen." },
+      { issue: "Ride selection UI unclear", category: "Booking", volume: 612, trendPct: 12, severity: "high", rootCause: "Tier names and price/ETA differences aren't explained, so riders can't tell what they're choosing before they confirm.", fix: "Add a one-line descriptor plus price and ETA delta to each tier; default to the rider's last choice; make the selected tier visually distinct." },
+      { issue: "Long ETA at airport terminal", category: "Airport", volume: 489, trendPct: 8, severity: "high", rootCause: "There is no terminal-aware pickup — drivers aren't pre-positioned and riders have to message to confirm the terminal.", fix: "Capture the terminal from the flight number; add a dedicated airport pickup flow with terminal selection and a designated waiting point." },
+      { issue: "Payment flow has too many steps", category: "Payments", volume: 331, trendPct: 18, severity: "medium", rootCause: "Adding or confirming a card spans multiple screens and saved cards aren't defaulted, so checkout feels heavy.", fix: "Offer one-tap checkout with a default saved card; collapse card entry into a single sheet; remember the last payment method used." },
+      { issue: "Driver cancellations before pickup", category: "Booking", volume: 278, trendPct: 22, severity: "high", rootCause: "Drivers cancel after accepting; the rider still waits through re-allocation and can be charged a fee.", fix: "Penalise repeat driver cancellations; auto-rebook instantly with no rider fee; show transparent re-allocation status." },
+      { issue: "App crashes on older Android devices", category: "Technical", volume: 196, trendPct: 5, severity: "medium", rootCause: "Map and SDK memory pressure on low-RAM devices and older OS versions causes crashes on the booking screen.", fix: "Add a lightweight map mode; cut memory use on the booking screen; expand crash testing across older Android device profiles." },
+      { issue: "Receipt emails not received", category: "Payments", volume: 143, trendPct: -3, severity: "low", rootCause: "Receipt delivery over email is unreliable and there's no in-app fallback for riders who need one.", fix: "Make receipts available in-app immediately; add a one-tap resend; monitor email deliverability." },
+      { issue: "Reward points expiring unnoticed", category: "Rewards", volume: 118, trendPct: 41, severity: "medium", rootCause: "There are no expiry reminders and the points balance and expiry date are hard to find in the app.", fix: "Send expiry reminders (push + in-app); show the points balance and next expiry prominently; offer one-tap redemption." },
     ],
   });
 
