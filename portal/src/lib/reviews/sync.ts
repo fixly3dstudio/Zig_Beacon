@@ -9,6 +9,19 @@ import {
 } from "./credentials";
 import type { NormalizedReview, StoreSyncResult, ReviewStore } from "./types";
 
+const DEMO_PREFIX: Record<"play" | "appstore", string> = {
+  play: "demo_gp_",
+  appstore: "demo_as_",
+};
+
+// Once a store returns real reviews, drop the seeded demo rows for that store
+// so the App Reviews page shows live data only.
+async function clearDemoReviews(key: "play" | "appstore") {
+  await prisma.signal.deleteMany({
+    where: { externalId: { startsWith: DEMO_PREFIX[key] } },
+  });
+}
+
 async function upsertReviews(reviews: NormalizedReview[]) {
   let created = 0;
   let updated = 0;
@@ -57,6 +70,7 @@ async function syncStore(
   try {
     const reviews = await fetcher();
     const { created, updated } = await upsertReviews(reviews);
+    if (reviews.length > 0) await clearDemoReviews(key);
     await markSync(key, `${reviews.length} fetched · ${created} new`);
     return { store, configured: true, fetched: reviews.length, created, updated, note };
   } catch (error) {
@@ -64,6 +78,24 @@ async function syncStore(
     await markSync(key, `Error: ${message}`);
     return { store, configured: true, fetched: 0, created: 0, updated: 0, error: message };
   }
+}
+
+/** Sync a single store — used right after credentials are saved. */
+export async function syncOneStore(key: "play" | "appstore"): Promise<StoreSyncResult> {
+  if (key === "play") {
+    const play = await getPlayCredentials();
+    return syncStore(
+      "Play Store",
+      "play",
+      Boolean(play),
+      () => fetchGooglePlayReviews(play!),
+      "Play API returns ~7 days of reviews; older history needs the Play Console export."
+    );
+  }
+  const appStore = await getAppStoreCredentials();
+  return syncStore("App Store", "appstore", Boolean(appStore), () =>
+    fetchAppStoreReviews(appStore!)
+  );
 }
 
 export async function syncAllReviews(): Promise<StoreSyncResult[]> {

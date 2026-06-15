@@ -24,6 +24,15 @@ const ANALYSIS_TYPES = [
   { id: "Pattern lessons", description: "UI/UX patterns on screen and when to use them" },
 ];
 
+// Where each mode's upload is saved (mirrors sectionForMode on the server).
+const MODE_DESTINATION: Record<string, string> = {
+  "Competitor teardown": "Competitors",
+  "Beacon Score review": "Product Health",
+  "Zig deep-dive": "Product Health",
+  "Explain this flow": "Opportunity Hub",
+  "Pattern lessons": "Opportunity Hub",
+};
+
 type UploadedImage = {
   id: string;
   file: File;
@@ -41,6 +50,7 @@ export function VisualAnalyzer() {
   const [result, setResult] = useState("");
   const [error, setError] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
+  const [savedTo, setSavedTo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
 
@@ -95,6 +105,7 @@ export function VisualAnalyzer() {
         return;
       }
 
+      setSavedTo(res.headers.get("X-Upload-Section-Label"));
       setState("streaming");
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
@@ -235,6 +246,13 @@ export function VisualAnalyzer() {
               </button>
             ))}
           </div>
+          <p className="mt-2.5 text-xs text-muted">
+            Uploads + analysis are saved to{" "}
+            <span className="font-medium text-foreground">
+              {MODE_DESTINATION[analysisType] ?? "Opportunity Hub"}
+            </span>{" "}
+            and shown on the dashboard.
+          </p>
         </div>
 
         {/* Context input */}
@@ -291,7 +309,7 @@ export function VisualAnalyzer() {
           {state === "done" && (
             <div className="flex items-center gap-1.5 text-xs font-medium text-success">
               <CheckCircle2 size={13} />
-              Complete
+              {savedTo ? `Saved to ${savedTo}` : "Complete"}
             </div>
           )}
           {(state === "loading" || state === "streaming") && (

@@ -10,8 +10,15 @@ import {
 } from "@/lib/reviews/credentials";
 import { verifyGooglePlay } from "@/lib/reviews/google-play";
 import { verifyAppStore } from "@/lib/reviews/app-store";
+import { syncOneStore } from "@/lib/reviews/sync";
 
-export type ActionResult = { ok: boolean; message: string };
+export type ActionResult = { ok: boolean; message: string; warning?: boolean };
+
+function revalidateReviewSurfaces() {
+  revalidatePath("/settings");
+  revalidatePath("/reviews");
+  revalidatePath("/");
+}
 
 export async function savePlayIntegration(input: {
   packageName: string;
@@ -39,6 +46,7 @@ export async function savePlayIntegration(input: {
     };
   }
 
+  // Authenticate first so we don't store obviously-bad keys.
   try {
     await verifyGooglePlay({ packageName, clientEmail, privateKey });
   } catch (error) {
@@ -48,10 +56,23 @@ export async function savePlayIntegration(input: {
     };
   }
 
+  // Persist the credentials, THEN pull reviews. Persistence never depends on the
+  // review fetch succeeding, so the connection survives a refresh either way.
   await savePlayCredentials({ packageName, clientEmail, privateKey });
-  revalidatePath("/settings");
-  revalidatePath("/reviews");
-  return { ok: true, message: "Google Play connected." };
+  const sync = await syncOneStore("play");
+  revalidateReviewSurfaces();
+
+  if (sync.error) {
+    return {
+      ok: true,
+      warning: true,
+      message: `Connected, but the first review pull failed: ${sync.error}. Credentials are saved — try Sync now from App Reviews.`,
+    };
+  }
+  return {
+    ok: true,
+    message: `Google Play connected — pulled ${sync.fetched} review${sync.fetched === 1 ? "" : "s"} (${sync.created} new).`,
+  };
 }
 
 export async function saveAppStoreIntegration(input: {
@@ -68,19 +89,24 @@ export async function saveAppStoreIntegration(input: {
     return { ok: false, message: "All App Store Connect fields are required." };
   }
 
-  try {
-    await verifyAppStore({ appId, keyId, issuerId, privateKey });
-  } catch (error) {
+  // For App Store Connect the credential check IS a review fetch, so persist the
+  // keys first and let the sync below surface any auth problem — this guarantees
+  // the connection sticks across a refresh.
+  await saveAppStoreCredentials({ appId, keyId, issuerId, privateKey });
+  const sync = await syncOneStore("appstore");
+  revalidateReviewSurfaces();
+
+  if (sync.error) {
     return {
-      ok: false,
-      message: `Could not authenticate with App Store Connect: ${error instanceof Error ? error.message : "unknown error"}`,
+      ok: true,
+      warning: true,
+      message: `Saved, but App Store Connect returned: ${sync.error}. Double-check the App ID and key role, then Test connection.`,
     };
   }
-
-  await saveAppStoreCredentials({ appId, keyId, issuerId, privateKey });
-  revalidatePath("/settings");
-  revalidatePath("/reviews");
-  return { ok: true, message: "App Store Connect connected." };
+  return {
+    ok: true,
+    message: `App Store Connect connected — pulled ${sync.fetched} review${sync.fetched === 1 ? "" : "s"} (${sync.created} new).`,
+  };
 }
 
 export async function testIntegration(store: "play" | "appstore"): Promise<ActionResult> {

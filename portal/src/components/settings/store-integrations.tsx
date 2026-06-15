@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import {
+  AlertCircle,
   Apple,
   CheckCircle2,
   ChevronDown,
@@ -9,7 +10,6 @@ import {
   Play,
   Plug,
   ShieldCheck,
-  XCircle,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,7 @@ import {
   testIntegration,
   disconnectIntegration,
   type ActionResult,
-} from "@/app/settings/integration-actions";
+} from "@/app/(app)/settings/integration-actions";
 import type { IntegrationStatus } from "@/lib/reviews/credentials";
 
 type Props = {
@@ -45,19 +45,20 @@ function StatusBadge({ status }: { status: IntegrationStatus }) {
 
 function ResultLine({ result }: { result: ActionResult | null }) {
   if (!result) return null;
+  const tone = !result.ok ? "danger" : result.warning ? "warn" : "success";
   return (
     <div
       className={cn(
         "mt-3 flex items-start gap-2 rounded-lg border p-2.5 text-[13px]",
-        result.ok
-          ? "border-success/30 bg-success/10 text-success"
-          : "border-danger/30 bg-danger/10 text-danger"
+        tone === "danger" && "border-danger/30 bg-danger/10 text-danger",
+        tone === "warn" && "border-warn/30 bg-warn/10 text-warn",
+        tone === "success" && "border-success/30 bg-success/10 text-success"
       )}
     >
-      {result.ok ? (
+      {tone === "success" ? (
         <CheckCircle2 size={15} className="mt-0.5 shrink-0" />
       ) : (
-        <XCircle size={15} className="mt-0.5 shrink-0" />
+        <AlertCircle size={15} className="mt-0.5 shrink-0" />
       )}
       <span>{result.message}</span>
     </div>

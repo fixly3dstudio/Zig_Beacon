@@ -12,6 +12,7 @@ import { CountUp } from "@/components/dashboard/count-up";
 import { AnimatedBar } from "@/components/dashboard/animated-bar";
 import { Sparkline } from "@/components/dashboard/sparkline";
 import { ImpactEffortMatrix } from "@/components/dashboard/impact-effort-matrix";
+import { UploadsPanelServer } from "@/components/visual-review/uploads-panel-server";
 
 export const dynamic = "force-dynamic";
 
@@ -288,7 +289,6 @@ export default async function Home() {
             <h2 className="text-[15px] font-medium text-foreground">
               Beacon Score by area · 10-week trend
             </h2>
-            <ViewLink href="/beacon-score" />
           </div>
           <ul className="mt-4">
             {areas.map((a) => {
@@ -512,6 +512,10 @@ export default async function Home() {
             })}
           </ul>
         </Card>
+
+        <div className="col-span-12">
+          <UploadsPanelServer title="Recent visual uploads" />
+        </div>
       </div>
     </div>
   );

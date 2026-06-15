@@ -5,7 +5,9 @@ import { motion } from "framer-motion";
 import {
   AlertCircle,
   Apple,
+  Calendar,
   CheckCircle2,
+  ChevronDown,
   Loader2,
   Play,
   RefreshCw,
@@ -13,7 +15,7 @@ import {
 } from "lucide-react";
 import { Card, CardLabel } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { syncReviewsAction, type SyncActionResult } from "@/app/reviews/actions";
+import { syncReviewsAction, type SyncActionResult } from "@/app/(app)/reviews/actions";
 
 export type ReviewItem = {
   id: number;
@@ -67,21 +69,37 @@ function sentimentClass(sentiment: string) {
   return "bg-elevated text-muted";
 }
 
+const RANGES: { value: string; label: string; days: number | null }[] = [
+  { value: "all", label: "All time", days: null },
+  { value: "7d", label: "Last 7 days", days: 7 },
+  { value: "30d", label: "Last month", days: 30 },
+  { value: "90d", label: "Last 3 months", days: 90 },
+  { value: "180d", label: "Last 6 months", days: 180 },
+  { value: "365d", label: "Last 12 months", days: 365 },
+];
+
+// Kept as a module helper so the Date.now() call isn't flagged as impure render.
+function rangeCutoff(value: string): number | null {
+  const days = RANGES.find((r) => r.value === value)?.days ?? null;
+  return days ? Date.now() - days * 86400000 : null;
+}
+
 export function ReviewsView({ reviews, configured }: ReviewsViewProps) {
   const [storeFilter, setStoreFilter] = useState<"All" | "App Store" | "Play Store">("All");
   const [ratingFilter, setRatingFilter] = useState<number | "All">("All");
+  const [rangeFilter, setRangeFilter] = useState("all");
   const [isPending, startTransition] = useTransition();
   const [syncResult, setSyncResult] = useState<SyncActionResult | null>(null);
 
-  const filtered = useMemo(
-    () =>
-      reviews.filter(
-        (r) =>
-          (storeFilter === "All" || r.store === storeFilter) &&
-          (ratingFilter === "All" || r.rating === ratingFilter)
-      ),
-    [reviews, storeFilter, ratingFilter]
-  );
+  const filtered = useMemo(() => {
+    const cutoff = rangeCutoff(rangeFilter);
+    return reviews.filter(
+      (r) =>
+        (storeFilter === "All" || r.store === storeFilter) &&
+        (ratingFilter === "All" || r.rating === ratingFilter) &&
+        (cutoff === null || new Date(r.createdAt).getTime() >= cutoff)
+    );
+  }, [reviews, storeFilter, ratingFilter, rangeFilter]);
 
   const stats = useMemo(() => {
     const total = reviews.length;
@@ -222,42 +240,61 @@ export function ReviewsView({ reviews, configured }: ReviewsViewProps) {
       </div>
 
       {/* Filters */}
-      <div className="mt-6 flex flex-wrap items-center gap-2">
-        {(["All", "App Store", "Play Store"] as const).map((s) => (
-          <button
-            key={s}
-            onClick={() => setStoreFilter(s)}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-medium transition-colors",
-              storeFilter === s
-                ? "border-foreground bg-foreground text-background"
-                : "border-border bg-background text-muted hover:text-foreground"
-            )}
+      <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          {(["All", "App Store", "Play Store"] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStoreFilter(s)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-medium transition-colors",
+                storeFilter === s
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-background text-muted hover:text-foreground"
+              )}
+            >
+              {s !== "All" && <StoreIcon store={s} size={13} />}
+              {s}
+            </button>
+          ))}
+          <span className="mx-1 h-5 w-px bg-border" />
+          {(["All", 5, 4, 3, 2, 1] as const).map((r) => (
+            <button
+              key={r}
+              onClick={() => setRatingFilter(r)}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors",
+                ratingFilter === r
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-background text-muted hover:text-foreground"
+              )}
+            >
+              {r === "All" ? "All ratings" : (
+                <>
+                  {r}
+                  <Star size={11} className={cn("fill-current", ratingFilter === r ? "" : "text-amber-400")} />
+                </>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Date range */}
+        <div className="relative shrink-0">
+          <Calendar size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+          <select
+            value={rangeFilter}
+            onChange={(e) => setRangeFilter(e.target.value)}
+            className="h-9 w-full cursor-pointer appearance-none rounded-lg border border-border bg-background pl-9 pr-8 text-xs font-medium text-foreground outline-none transition-colors hover:border-foreground/30 focus:border-brand lg:w-44"
           >
-            {s !== "All" && <StoreIcon store={s} size={13} />}
-            {s}
-          </button>
-        ))}
-        <span className="mx-1 h-5 w-px bg-border" />
-        {(["All", 5, 4, 3, 2, 1] as const).map((r) => (
-          <button
-            key={r}
-            onClick={() => setRatingFilter(r)}
-            className={cn(
-              "inline-flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors",
-              ratingFilter === r
-                ? "border-foreground bg-foreground text-background"
-                : "border-border bg-background text-muted hover:text-foreground"
-            )}
-          >
-            {r === "All" ? "All ratings" : (
-              <>
-                {r}
-                <Star size={11} className={cn("fill-current", ratingFilter === r ? "" : "text-amber-400")} />
-              </>
-            )}
-          </button>
-        ))}
+            {RANGES.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted" />
+        </div>
       </div>
 
       {/* Review list */}

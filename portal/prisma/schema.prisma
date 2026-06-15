@@ -77,6 +77,17 @@ model Signal {
   title      String?
 }
 
+model VisualUpload {
+  id           String   @id @default(cuid())
+  section      String // competitors | product-health | opportunities
+  analysisType String
+  context      String?
+  analysis     String   @default("")
+  images       String[] // public URLs e.g. /uploads/xxx.png
+  imageCount   Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
 model StoreIntegration {
   store        String    @id // "play" | "appstore"
   config       String    // AES-256-GCM encrypted JSON of credentials

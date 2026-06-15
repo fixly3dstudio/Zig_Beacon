@@ -5,9 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, X, type LucideIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, LogOut, X, type LucideIcon } from "lucide-react";
 import { navGroups, settingsItem, isItemActive } from "./nav-config";
 import { useMobileNavOpen, closeMobileNav } from "./mobile-nav-store";
+import { logoutAction } from "@/app/login/actions";
 
 interface NavLinkProps {
   item: { href: string; name: string; icon: LucideIcon };
@@ -172,6 +173,18 @@ export function Sidebar() {
             active={isItemActive(settingsItem.href, pathname)}
             collapsed={collapsed}
           />
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              title={collapsed ? "Sign out" : undefined}
+              className={`relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-surface hover:text-foreground ${
+                collapsed ? "justify-center" : ""
+              }`}
+            >
+              <LogOut size={18} className="shrink-0" />
+              {!collapsed && <span className="whitespace-nowrap">Sign out</span>}
+            </button>
+          </form>
         </div>
       </aside>
     </>

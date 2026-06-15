@@ -1,4 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  saveUploadImages,
+  createVisualUpload,
+  sectionForMode,
+  SECTION_LABEL,
+} from "@/lib/visual-uploads";
+
+export const runtime = "nodejs";
 
 const OLLAMA_BASE = process.env.OLLAMA_URL ?? "http://localhost:11434";
 const VISION_MODEL = process.env.OLLAMA_VISION_MODEL ?? "qwen2.5vl:3b";
@@ -114,6 +122,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No images provided" }, { status: 400 });
   }
 
+  // Persist the uploaded images to the project and route them to a section.
+  const section = sectionForMode(analysisType);
+  let imageUrls: string[] = [];
+  try {
+    imageUrls = await saveUploadImages(files);
+  } catch {
+    imageUrls = [];
+  }
+
   const base64Images: string[] = [];
   for (const file of files) {
     const buffer = await file.arrayBuffer();
@@ -166,6 +183,25 @@ export async function POST(req: NextRequest) {
   }
 
   const encoder = new TextEncoder();
+  let analysisText = "";
+  let saved = false;
+
+  async function persist() {
+    if (saved) return;
+    saved = true;
+    try {
+      await createVisualUpload({
+        section,
+        analysisType,
+        context,
+        images: imageUrls,
+        analysis: analysisText,
+      });
+    } catch {
+      // never let persistence break the response
+    }
+  }
+
   const stream = new ReadableStream({
     async start(controller) {
       const reader = ollamaRes.body?.getReader();
@@ -187,8 +223,12 @@ export async function POST(req: NextRequest) {
                 done?: boolean;
               };
               const token = parsed.message?.content ?? "";
-              if (token) controller.enqueue(encoder.encode(token));
+              if (token) {
+                analysisText += token;
+                controller.enqueue(encoder.encode(token));
+              }
               if (parsed.done) {
+                await persist();
                 controller.close();
                 return;
               }
@@ -198,6 +238,7 @@ export async function POST(req: NextRequest) {
           }
         }
       } finally {
+        await persist();
         reader.releaseLock();
         controller.close();
       }
@@ -205,6 +246,11 @@ export async function POST(req: NextRequest) {
   });
 
   return new Response(stream, {
-    headers: { "Content-Type": "text/plain; charset=utf-8", "X-Content-Type-Options": "nosniff" },
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "X-Content-Type-Options": "nosniff",
+      "X-Upload-Section": section,
+      "X-Upload-Section-Label": SECTION_LABEL[section],
+    },
   });
 }
