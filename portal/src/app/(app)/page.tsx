@@ -10,15 +10,12 @@ import { cn } from "@/lib/utils";
 import { Card, CardLabel } from "@/components/ui/card";
 import { CountUp } from "@/components/dashboard/count-up";
 import { AnimatedBar } from "@/components/dashboard/animated-bar";
-import { Sparkline } from "@/components/dashboard/sparkline";
 import { ImpactEffortMatrix } from "@/components/dashboard/impact-effort-matrix";
 import { LiveTopComplaints } from "@/components/dashboard/live-top-complaints";
-import { UploadsPanelServer } from "@/components/visual-review/uploads-panel-server";
 
 export const dynamic = "force-dynamic";
 
 const RED = "var(--danger)";
-const AMBER = "var(--warn)";
 
 function relativeTime(date: Date) {
   const diff = Date.now() - date.getTime();
@@ -91,18 +88,6 @@ export default async function Home() {
       monthAgo: history[Math.max(history.length - 5, 0)] ?? 0,
     }))
     .sort((a, b) => a.latest - b.latest);
-
-  const weeks = Math.max(...areas.map((a) => a.history.length), 0);
-  const overallHistory = Array.from({ length: weeks }, (_, w) =>
-    Math.round(
-      areas.reduce((sum, a) => sum + (a.history[w] ?? a.latest), 0) /
-        Math.max(areas.length, 1)
-    )
-  );
-  const overall = overallHistory[overallHistory.length - 1] ?? 0;
-  const overallMonthAgo =
-    overallHistory[Math.max(overallHistory.length - 5, 0)] ?? overall;
-  const overallDelta = overall - overallMonthAgo;
 
   // ── Sentiment ────────────────────────────────────────────────────────────
   const sentMap = new Map(signals.map((g) => [g.sentiment, g._count._all]));
@@ -212,24 +197,7 @@ export default async function Home() {
       )}
 
       {/* KPI strip */}
-      <div className="mt-5 grid grid-cols-2 gap-4 xl:grid-cols-4">
-        <Card className="p-5">
-          <div className="flex items-start justify-between">
-            <CardLabel>Beacon Score</CardLabel>
-            <Delta value={overallDelta} suffix=" /30d" />
-          </div>
-          <div className="mt-3 flex items-end justify-between gap-3">
-            <div className="flex items-baseline">
-              <CountUp
-                value={overall}
-                className="text-4xl font-semibold tracking-tight text-foreground tabular-nums"
-              />
-              <span className="ml-1 text-sm text-muted">/100</span>
-            </div>
-            <Sparkline values={overallHistory} color="var(--brand)" fill />
-          </div>
-        </Card>
-
+      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="p-5">
           <div className="flex items-start justify-between">
             <CardLabel>Negative sentiment</CardLabel>
@@ -284,52 +252,6 @@ export default async function Home() {
       </div>
 
       <div className="mt-5 grid grid-cols-12 gap-5">
-        {/* Score by area with trends */}
-        <Card className="col-span-12 lg:col-span-7">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[15px] font-medium text-foreground">
-              Beacon Score by area · 10-week trend
-            </h2>
-          </div>
-          <ul className="mt-4">
-            {areas.map((a) => {
-              const delta = a.latest - a.monthAgo;
-              const critical = a.latest < 50;
-              return (
-                <li
-                  key={a.area}
-                  className="flex items-center gap-4 border-b border-border/60 py-2.5 last:border-0"
-                >
-                  <span className="w-24 shrink-0 text-[13px] font-medium text-foreground">
-                    {a.area}
-                  </span>
-                  <Sparkline
-                    values={a.history}
-                    width={120}
-                    height={24}
-                    color={critical ? RED : "var(--foreground)"}
-                  />
-                  <div className="flex flex-1 items-center justify-end gap-4">
-                    <Delta value={delta} />
-                    <span
-                      className={cn(
-                        "w-10 text-right text-[15px] font-semibold tabular-nums",
-                        critical ? "" : "text-foreground"
-                      )}
-                      style={critical ? { color: RED } : undefined}
-                    >
-                      {a.latest}
-                    </span>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-          <p className="mt-3 text-[11px] text-muted">
-            Sorted weakest first — the top rows are where attention pays off most.
-          </p>
-        </Card>
-
         {/* Sentiment */}
         <Card className="col-span-12 lg:col-span-5">
           <div className="flex items-center justify-between">
@@ -474,10 +396,6 @@ export default async function Home() {
             })}
           </ul>
         </Card>
-
-        <div className="col-span-12">
-          <UploadsPanelServer title="Recent visual uploads" />
-        </div>
       </div>
     </div>
   );

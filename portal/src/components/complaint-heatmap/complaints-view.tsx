@@ -57,6 +57,7 @@ const STORE_SOURCES = ["App Store", "Play Store"];
 const CATEGORY_FIX: Record<string, string> = {
   Promotions: "Auto-apply the best eligible promo at checkout and show it in the fare breakdown.",
   Booking: "Clarify ride options before confirm and make cancellations / re-allocation transparent.",
+  "Ride Quality": "Tighten driver and vehicle standards, add post-trip quality flags, and act on low-rated trips.",
   Payments: "Streamline checkout to one tap with a default saved card and in-app receipts.",
   Airport: "Add a terminal-aware airport pickup flow that captures the terminal up front.",
   Rewards: "Add points-expiry reminders and surface the balance and redemption clearly.",
@@ -208,6 +209,33 @@ function IssueDetail({
   );
 }
 
+function ageDays(value: string) {
+  return (Date.now() - new Date(value).getTime()) / 86400000;
+}
+
+// Smart priority for the product team: surface the complaints to act on first.
+// Weights low star ratings / negative sentiment highest, then recency, then a
+// boost if the complaint sits in the module the focus report says to fix.
+function signalPriority(signal: ComplaintSignal, focusCategory?: string): number {
+  const r = signal.rating;
+  const severity =
+    typeof r === "number" && r > 0
+      ? r <= 1
+        ? 5
+        : r === 2
+          ? 4
+          : r === 3
+            ? 3
+            : 1
+      : signal.sentiment === "negative"
+        ? 3
+        : 1;
+  const days = ageDays(signal.createdAt);
+  const recency = days <= 7 ? 3 : days <= 30 ? 2 : days <= 90 ? 1 : 0;
+  const focusBoost = focusCategory && signal.category === focusCategory ? 2 : 0;
+  return severity * 3 + recency + focusBoost;
+}
+
 export function ComplaintsView({
   signals,
   clusters,
@@ -341,6 +369,20 @@ export function ComplaintsView({
   const focusModule = reportGroups[0];
   const maxClusterVolume = Math.max(1, ...activeClusters.map((c) => c.volume));
   const maxFocusScore = Math.max(1, ...reportGroups.map((g) => g.focusScore));
+
+  // Voices ranked by product priority — the most-rated, most-urgent complaints
+  // (especially in the focus module) bubble to the top.
+  const rankedSignals = useMemo(() => {
+    const focusCategory = focusModule?.category;
+    return [...filteredSignals]
+      .map((s) => ({ s, score: signalPriority(s, focusCategory) }))
+      .sort(
+        (a, b) =>
+          b.score - a.score ||
+          new Date(b.s.createdAt).getTime() - new Date(a.s.createdAt).getTime()
+      )
+      .map((x) => x.s);
+  }, [filteredSignals, focusModule]);
 
   function downloadReport(group: (typeof reportGroups)[number], rank: number) {
     const generatedAt = new Date().toLocaleString("en-SG", {
@@ -522,12 +564,26 @@ export function ComplaintsView({
               })}
             </div>
 
-            <div className="mt-5 grid grid-cols-12 gap-5">
+            <p className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted">
+              <Flame size={13} className="text-brand" />
+              Sorted by product priority — lowest-rated, most recent complaints in
+              {focusModule ? ` ${focusModule.category}` : " the focus area"} first.
+            </p>
+
+            <div className="mt-3 grid grid-cols-12 gap-5">
               {/* Voices feed */}
               <div className="col-span-12 space-y-3 xl:col-span-8">
-                {filteredSignals.map((signal, i) => {
+                {rankedSignals.map((signal, i) => {
                   const Icon = sourceIcons[signal.source] ?? MessageSquareText;
                   const negative = signal.sentiment === "negative";
+                  const rating = typeof signal.rating === "number" && signal.rating > 0
+                    ? signal.rating
+                    : null;
+                  // "Fix now" = a low-rated complaint sitting in the focus module.
+                  const fixNow =
+                    !!focusModule &&
+                    signal.category === focusModule.category &&
+                    ((rating !== null && rating <= 2) || (rating === null && negative));
                   return (
                     <motion.div
                       key={signal.id}
@@ -536,10 +592,10 @@ export function ComplaintsView({
                       transition={{ delay: Math.min(i * 0.03, 0.3), duration: 0.2 }}
                       className={cn(
                         "rounded-xl border bg-background p-5",
-                        negative ? "border-danger/20" : "border-border"
+                        fixNow ? "border-danger/40" : negative ? "border-danger/20" : "border-border"
                       )}
                     >
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex flex-wrap items-center gap-2.5">
                         <span
                           className={cn(
                             "flex h-7 w-7 items-center justify-center rounded-full",
@@ -551,8 +607,25 @@ export function ComplaintsView({
                         <span className="text-[13px] font-semibold text-foreground">
                           {signal.source}
                         </span>
+                        {rating !== null && (
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-0.5 text-[11px] font-semibold tabular-nums",
+                              rating <= 2 ? "text-[var(--danger)]" : "text-muted"
+                            )}
+                          >
+                            {rating}
+                            <Star size={11} className="fill-amber-400 text-amber-400" />
+                          </span>
+                        )}
                         <span className="text-[11px] text-muted">·</span>
                         <span className="text-[11px] text-muted">{signal.category}</span>
+                        {fixNow && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-danger/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--danger)]">
+                            <Flame size={10} />
+                            Fix now
+                          </span>
+                        )}
                         <span className="ml-auto text-[11px] tabular-nums text-muted">
                           {ageLabel(signal.createdAt)}
                         </span>
@@ -575,7 +648,7 @@ export function ComplaintsView({
                     </motion.div>
                   );
                 })}
-                {filteredSignals.length === 0 && (
+                {rankedSignals.length === 0 && (
                   <div className="rounded-xl border border-dashed border-border bg-surface p-10 text-center">
                     <p className="text-sm font-medium text-foreground">
                       Nothing matches this combination
@@ -667,6 +740,10 @@ export function ComplaintsView({
                         <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-background">
                           Priority 1
                         </span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-danger/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--danger)]">
+                          <Flame size={10} />
+                          Fix immediately
+                        </span>
                       </div>
                       <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <h2 className="text-xl font-semibold tracking-tight text-foreground">
@@ -690,8 +767,14 @@ export function ComplaintsView({
                         {focusModule.reviewMentions > 0
                           ? `, echoed by ${focusModule.reviewMentions} app store review${focusModule.reviewMentions === 1 ? "" : "s"}`
                           : ""}
-                        . Fix these first.
+                        .
                       </p>
+                      {focusModule.items[0] && (
+                        <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-danger/10 px-2.5 py-1.5 text-[12px] font-semibold leading-5 text-[var(--danger)]">
+                          <Flame size={13} className="shrink-0" />
+                          Fix immediately: {focusModule.items[0].issue}
+                        </p>
+                      )}
                     </div>
                   </div>
 

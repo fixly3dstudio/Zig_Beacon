@@ -4,7 +4,6 @@ import {
   type CompetitorProfile,
   type MatrixFeature,
 } from "@/components/competitors/profile-drawer";
-import { UploadsPanelServer } from "@/components/visual-review/uploads-panel-server";
 
 export const dynamic = "force-dynamic";
 
@@ -109,10 +108,6 @@ export default async function Page() {
           competitors={profiles}
           featureGroups={featureGroups}
         />
-      </div>
-
-      <div className="mt-5">
-        <UploadsPanelServer section="competitors" title="Competitor screens from Visual Trainer" />
       </div>
     </div>
   );

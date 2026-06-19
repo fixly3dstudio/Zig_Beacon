@@ -8,18 +8,17 @@ import {
   Calendar,
   CheckCircle2,
   ChevronDown,
-  ExternalLink,
+  ClipboardList,
   Loader2,
   Play,
   RefreshCw,
   Star,
-  Ticket,
 } from "lucide-react";
 import { Card, CardLabel } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { syncReviewsAction, type SyncActionResult } from "@/app/(app)/reviews/actions";
 import { getBrowserIntegrations } from "@/lib/reviews/browser-credentials";
-import { JiraTicketModal } from "@/components/reviews/jira-ticket-modal";
+import { StoryModal } from "@/components/reviews/story-modal";
 
 export type ReviewItem = {
   id: number;
@@ -32,7 +31,6 @@ export type ReviewItem = {
   category: string;
   sentiment: string;
   createdAt: string;
-  jiraKey: string | null;
 };
 
 type StoreRatingSummary = {
@@ -43,7 +41,6 @@ type StoreRatingSummary = {
 type ReviewsViewProps = {
   reviews: ReviewItem[];
   configured: { playStore: boolean; appStore: boolean };
-  jiraBaseUrl: string | null;
   ratingSummaries: {
     appStore: StoreRatingSummary | null;
     playStore: StoreRatingSummary | null;
@@ -102,7 +99,6 @@ function rangeCutoff(value: string): number | null {
 export function ReviewsView({
   reviews,
   configured,
-  jiraBaseUrl,
   ratingSummaries,
 }: ReviewsViewProps) {
   const [displayedReviews, setDisplayedReviews] = useState(reviews);
@@ -564,34 +560,14 @@ export function ReviewsView({
                 {review.category}
               </span>
 
-              {review.jiraKey ? (
-                jiraBaseUrl ? (
-                  <a
-                    href={`${jiraBaseUrl}/browse/${review.jiraKey}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-[11px] font-medium text-success"
-                  >
-                    <Ticket size={12} />
-                    {review.jiraKey}
-                    <ExternalLink size={11} />
-                  </a>
-                ) : (
-                  <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-[11px] font-medium text-success">
-                    <Ticket size={12} />
-                    {review.jiraKey}
-                  </span>
-                )
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setTicketReview(review)}
-                  className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-muted transition-colors hover:border-brand/40 hover:text-brand"
-                >
-                  <Ticket size={12} />
-                  Create Jira ticket
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setTicketReview(review)}
+                className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-muted transition-colors hover:border-brand/40 hover:text-brand"
+              >
+                <ClipboardList size={12} />
+                Copy as PM story
+              </button>
             </div>
           </motion.div>
         ))}
@@ -607,15 +583,7 @@ export function ReviewsView({
       </div>
 
       {ticketReview && (
-        <JiraTicketModal
-          review={ticketReview}
-          onClose={() => setTicketReview(null)}
-          onCreated={(key) =>
-            setDisplayedReviews((prev) =>
-              prev.map((r) => (r.id === ticketReview.id ? { ...r, jiraKey: key } : r))
-            )
-          }
-        />
+        <StoryModal review={ticketReview} onClose={() => setTicketReview(null)} />
       )}
     </div>
   );

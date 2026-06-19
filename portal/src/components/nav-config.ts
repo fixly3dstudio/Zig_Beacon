@@ -5,11 +5,7 @@ import {
   Lightbulb,
   Newspaper,
   Flame,
-  HeartPulse,
-  Gauge,
   Target,
-  Sparkles,
-  ScanEye,
   Star,
   Settings,
   type LucideIcon,
@@ -47,16 +43,7 @@ export const navGroups: NavGroup[] = [
   {
     label: "Product",
     items: [
-      { name: "Product Health", href: "/product-health", icon: HeartPulse },
-      { name: "Beacon Score", href: "/beacon-score", icon: Gauge },
       { name: "Opportunity Hub", href: "/opportunities", icon: Target },
-    ],
-  },
-  {
-    label: "AI",
-    items: [
-      { name: "AI Coach", href: "/coach", icon: Sparkles },
-      { name: "Visual Trainer", href: "/visual-review", icon: ScanEye },
     ],
   },
 ];

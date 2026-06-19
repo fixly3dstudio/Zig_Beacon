@@ -77,7 +77,6 @@ model Signal {
   appVersion String?
   author     String?
   title      String?
-  jiraKey    String? // Jira issue key once a ticket is raised from this review
 }
 
 model VisualUpload {

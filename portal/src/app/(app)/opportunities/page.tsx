@@ -13,7 +13,6 @@ import {
 import { prisma } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { Card, CardLabel } from "@/components/ui/card";
-import { UploadsPanelServer } from "@/components/visual-review/uploads-panel-server";
 
 export const dynamic = "force-dynamic";
 
@@ -651,10 +650,6 @@ export default async function Page() {
             </div>
           </div>
         </Card>
-      </div>
-
-      <div className="mt-5">
-        <UploadsPanelServer section="opportunities" title="Opportunity screens from Visual Trainer" />
       </div>
     </div>
   );
