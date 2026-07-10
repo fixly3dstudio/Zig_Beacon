@@ -56,6 +56,16 @@ type PlayReview = {
   }[];
 };
 
+type PlayReviewPage = {
+  reviews?: PlayReview[];
+  tokenPagination?: { nextPageToken?: string };
+  pageInfo?: {
+    totalResults?: number;
+    resultPerPage?: number;
+    startIndex?: number;
+  };
+};
+
 function googleErrorMessage(status: number, detail: string) {
   let message = detail;
   try {
@@ -92,14 +102,21 @@ function googleErrorMessage(status: number, detail: string) {
   return `Play reviews fetch failed (${status}): ${message.slice(0, 300)}`;
 }
 
-async function fetchReviewPage(creds: PlayCredentials, token: string, pageToken?: string) {
+async function fetchReviewPage(
+  creds: PlayCredentials,
+  token: string,
+  options: { pageToken?: string; startIndex?: number } = {}
+): Promise<PlayReviewPage> {
   const url = new URL(
     `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(
       creds.packageName
     )}/reviews`
   );
   url.searchParams.set("maxResults", "100");
-  if (pageToken) url.searchParams.set("token", pageToken);
+  if (options.pageToken) url.searchParams.set("token", options.pageToken);
+  if (!options.pageToken && options.startIndex) {
+    url.searchParams.set("startIndex", String(options.startIndex));
+  }
 
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
   if (!res.ok) {
@@ -107,16 +124,13 @@ async function fetchReviewPage(creds: PlayCredentials, token: string, pageToken?
     throw new Error(googleErrorMessage(res.status, detail));
   }
 
-  return (await res.json()) as {
-    reviews?: PlayReview[];
-    tokenPagination?: { nextPageToken?: string };
-  };
+  return (await res.json()) as PlayReviewPage;
 }
 
 /**
- * Fetches recent Google Play reviews. NOTE: the Play Developer API only returns
- * reviews from roughly the last 7 days (and only those with comments). Full
- * history requires the Play Console → Cloud Storage export.
+ * Fetches all review rows that the Google Play Developer API exposes. Google
+ * may paginate with either tokenPagination or pageInfo/startIndex, so we handle
+ * both. Rating-only rows are kept as reviews so store counts match the API.
  */
 export async function fetchGooglePlayReviews(
   creds: PlayCredentials
@@ -125,20 +139,28 @@ export async function fetchGooglePlayReviews(
 
   const reviews: NormalizedReview[] = [];
   let pageToken: string | undefined;
+  let startIndex = 0;
+  let hasMoreByIndex = false;
+  const seenPageKeys = new Set<string>();
 
   do {
-    const data = await fetchReviewPage(creds, token, pageToken);
+    const pageKey = pageToken ? `token:${pageToken}` : `index:${startIndex}`;
+    if (seenPageKeys.has(pageKey)) break;
+    seenPageKeys.add(pageKey);
 
-    for (const review of data.reviews ?? []) {
+    const data = await fetchReviewPage(creds, token, { pageToken, startIndex });
+    const pageReviews = data.reviews ?? [];
+
+    for (const review of pageReviews) {
       const comment = review.comments?.find((c) => c.userComment)?.userComment;
-      if (!comment?.text) continue;
+      if (!comment) continue;
       const seconds = Number(comment.lastModified?.seconds ?? 0);
       reviews.push({
         externalId: `gp_${review.reviewId}`,
         store: "Play Store",
         rating: comment.starRating ?? 0,
-        title: null,
-        body: comment.text,
+        title: comment.text?.trim() ? null : "Rating only",
+        body: comment.text?.trim() || "No written comment provided.",
         author: review.authorName ?? null,
         appVersion: comment.appVersionName ?? null,
         submittedAt: seconds ? new Date(seconds * 1000) : new Date(),
@@ -146,7 +168,13 @@ export async function fetchGooglePlayReviews(
     }
 
     pageToken = data.tokenPagination?.nextPageToken;
-  } while (pageToken);
+    const pageInfo = data.pageInfo;
+    const resultPerPage = pageInfo?.resultPerPage ?? pageReviews.length;
+    const totalResults = pageInfo?.totalResults ?? 0;
+    const currentStart = pageInfo?.startIndex ?? startIndex;
+    startIndex = currentStart + resultPerPage;
+    hasMoreByIndex = !pageToken && resultPerPage > 0 && startIndex < totalResults;
+  } while (pageToken || hasMoreByIndex);
 
   return reviews;
 }
