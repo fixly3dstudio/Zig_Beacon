@@ -13,11 +13,13 @@ import {
   Play,
   RefreshCw,
   Star,
+  X,
 } from "lucide-react";
 import { Card, CardLabel } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { syncReviewsAction, type SyncActionResult } from "@/app/(app)/reviews/actions";
 import { getBrowserIntegrations } from "@/lib/reviews/browser-credentials";
+import type { StoreSyncResult } from "@/lib/reviews/types";
 import { StoryModal } from "@/components/reviews/story-modal";
 
 export type ReviewItem = {
@@ -133,6 +135,128 @@ export function ReviewsView({
     return { reviews: data.reviews ?? [], ratingSummary: data.ratingSummary ?? null };
   }
 
+  async function loadBrowserPlayStoreReviews() {
+    const play = getBrowserIntegrations().play;
+    if (!play) return null;
+
+    const response = await fetch("/api/reviews/play-store-live", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(play),
+    });
+    const data = (await response.json()) as { reviews?: ReviewItem[]; error?: string };
+    if (!response.ok) {
+      throw new Error(data.error ?? "Could not fetch Play Store reviews.");
+    }
+    return { reviews: data.reviews ?? [] };
+  }
+
+  // Pull whichever stores are connected in the browser, combine BOTH stores'
+  // live reviews with the stored ones (deduped, live first), and report status.
+  async function loadCombinedBrowserReviews(): Promise<{
+    combined: ReviewItem[];
+    results: StoreSyncResult[];
+    appStoreRatingSummary: StoreRatingSummary | null;
+  } | null> {
+    const saved = getBrowserIntegrations();
+    if (!saved.appstore && !saved.play) return null;
+
+    const [asRes, psRes] = await Promise.allSettled([
+      saved.appstore ? loadBrowserAppStoreReviews() : Promise.resolve(null),
+      saved.play ? loadBrowserPlayStoreReviews() : Promise.resolve(null),
+    ]);
+
+    const results: StoreSyncResult[] = [];
+    let asReviews: ReviewItem[] = [];
+    let psReviews: ReviewItem[] = [];
+    let appStoreRatingSummary: StoreRatingSummary | null = null;
+
+    if (saved.appstore) {
+      if (asRes.status === "fulfilled" && asRes.value) {
+        asReviews = asRes.value.reviews;
+        appStoreRatingSummary = asRes.value.ratingSummary;
+        results.push({
+          store: "App Store",
+          configured: true,
+          fetched: asReviews.length,
+          created: asReviews.length,
+          updated: 0,
+          note:
+            asReviews.length === 0
+              ? "Connected, but App Store Connect returned no review rows for this app."
+              : "Loaded live from your App Store connection.",
+        });
+      } else {
+        results.push({
+          store: "App Store",
+          configured: true,
+          fetched: 0,
+          created: 0,
+          updated: 0,
+          error:
+            asRes.status === "rejected"
+              ? asRes.reason instanceof Error
+                ? asRes.reason.message
+                : String(asRes.reason)
+              : "Could not fetch App Store reviews.",
+        });
+      }
+    }
+
+    if (saved.play) {
+      if (psRes.status === "fulfilled" && psRes.value) {
+        psReviews = psRes.value.reviews;
+        results.push({
+          store: "Play Store",
+          configured: true,
+          fetched: psReviews.length,
+          created: psReviews.length,
+          updated: 0,
+          note:
+            psReviews.length === 0
+              ? "Connected, but Play returned no reviews (the API only serves ~7 days of commented reviews)."
+              : "Loaded live from your Play Store connection.",
+        });
+      } else {
+        results.push({
+          store: "Play Store",
+          configured: true,
+          fetched: 0,
+          created: 0,
+          updated: 0,
+          error:
+            psRes.status === "rejected"
+              ? psRes.reason instanceof Error
+                ? psRes.reason.message
+                : String(psRes.reason)
+              : "Could not fetch Play Store reviews.",
+        });
+      }
+    }
+
+    const live = [...asReviews, ...psReviews];
+    const liveKeys = new Set(live.map((r) => `${r.store}:${r.title}:${r.body}`));
+    const combined =
+      live.length > 0
+        ? [...live, ...reviews.filter((r) => !liveKeys.has(`${r.store}:${r.title}:${r.body}`))]
+        : reviews;
+
+    return { combined, results, appStoreRatingSummary };
+  }
+
+  function applyCombined(res: {
+    combined: ReviewItem[];
+    results: StoreSyncResult[];
+    appStoreRatingSummary: StoreRatingSummary | null;
+  }) {
+    setDisplayedReviews(res.combined);
+    const summary = res.appStoreRatingSummary;
+    if (summary) {
+      setStoreRatingSummaries((current) => ({ ...current, appStore: summary }));
+    }
+    setSyncResult({ ok: res.results.every((r) => !r.error), results: res.results });
+  }
+
   useEffect(() => {
     const saved = getBrowserIntegrations();
     if (!saved.appstore && !saved.play) return;
@@ -142,49 +266,12 @@ export function ReviewsView({
       playStore: configured.playStore || Boolean(saved.play),
     });
 
-    if (saved.appstore) {
-      loadBrowserAppStoreReviews()
-        .then((liveResult) => {
-          if (!liveResult) return;
-          const live = liveResult.reviews;
-          setDisplayedReviews(live.length > 0 ? live : reviews);
-          setStoreRatingSummaries((current) => ({
-            ...current,
-            appStore: liveResult.ratingSummary ?? current.appStore,
-          }));
-          setSyncResult({
-            ok: true,
-            results: [
-              {
-                store: "App Store",
-                configured: true,
-                fetched: live.length,
-                created: live.length,
-                updated: 0,
-                note:
-                  live.length === 0
-                    ? "Connected, but App Store Connect returned no review rows for this app."
-                    : "Loaded from the browser-saved App Store connection.",
-              },
-            ],
-          });
-        })
-        .catch((error) => {
-          setSyncResult({
-            ok: false,
-            results: [
-              {
-                store: "App Store",
-                configured: true,
-                fetched: 0,
-                created: 0,
-                updated: 0,
-                error: error instanceof Error ? error.message : "Could not fetch App Store reviews.",
-              },
-            ],
-          });
-        });
-    }
+    loadCombinedBrowserReviews()
+      .then((res) => {
+        if (res) applyCombined(res);
+      })
+      .catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [configured.appStore, configured.playStore, reviews]);
 
   const modules = useMemo(
@@ -247,33 +334,15 @@ export function ReviewsView({
   function handleSync() {
     startTransition(async () => {
       const saved = getBrowserIntegrations();
-      if (saved.appstore) {
+      if (saved.appstore || saved.play) {
         try {
-          const liveResult = await loadBrowserAppStoreReviews();
-          if (liveResult) {
-            const live = liveResult.reviews;
-            setDisplayedReviews(live.length > 0 ? live : reviews);
-            setStoreRatingSummaries((current) => ({
-              ...current,
-              appStore: liveResult.ratingSummary ?? current.appStore,
+          const res = await loadCombinedBrowserReviews();
+          if (res) {
+            setConnection((current) => ({
+              appStore: current.appStore || Boolean(saved.appstore),
+              playStore: current.playStore || Boolean(saved.play),
             }));
-            setConnection((current) => ({ ...current, appStore: true }));
-            setSyncResult({
-              ok: true,
-              results: [
-                {
-                  store: "App Store",
-                  configured: true,
-                  fetched: live.length,
-                  created: live.length,
-                  updated: 0,
-                  note:
-                    live.length === 0
-                      ? "Connected, but App Store Connect returned no review rows for this app."
-                      : "Fetched live through the browser-saved App Store connection.",
-                },
-              ],
-            });
+            applyCombined(res);
             return;
           }
         } catch (error) {
@@ -286,13 +355,14 @@ export function ReviewsView({
                 fetched: 0,
                 created: 0,
                 updated: 0,
-                error: error instanceof Error ? error.message : "Could not fetch App Store reviews.",
+                error: error instanceof Error ? error.message : "Could not fetch reviews.",
               },
             ],
           });
           return;
         }
       }
+      // No browser-saved creds — fall back to the server-side (DB/env) sync.
       const result = await syncReviewsAction();
       setSyncResult(result);
     });
@@ -344,7 +414,7 @@ export function ReviewsView({
               ) : (
                 <AlertCircle size={16} className="mt-0.5 shrink-0" />
               )}
-              <div>
+              <div className="min-w-0 flex-1">
                 <span className="font-semibold">{r.store}:</span>{" "}
                 {r.error
                   ? r.error
@@ -355,6 +425,20 @@ export function ReviewsView({
                   <span className="mt-0.5 block text-xs opacity-70">{r.note}</span>
                 )}
               </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setSyncResult((current) => {
+                    if (!current) return null;
+                    const results = current.results.filter((item) => item.store !== r.store);
+                    return results.length ? { ...current, results } : null;
+                  })
+                }
+                aria-label={`Dismiss ${r.store} alert`}
+                className="rounded-md p-0.5 opacity-70 transition-opacity hover:opacity-100"
+              >
+                <X size={14} />
+              </button>
             </div>
           ))}
         </div>

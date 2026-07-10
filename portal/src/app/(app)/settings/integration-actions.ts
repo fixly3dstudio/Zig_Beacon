@@ -52,7 +52,7 @@ export async function savePlayIntegration(input: {
   } catch (error) {
     return {
       ok: false,
-      message: `Could not authenticate with Google: ${error instanceof Error ? error.message : "unknown error"}`,
+      message: `Could not connect to Google Play reviews: ${error instanceof Error ? error.message : "unknown error"}`,
     };
   }
 

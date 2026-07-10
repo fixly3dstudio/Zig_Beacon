@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertCircle, CheckCircle2, Loader2, Mail, Send } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, Mail, Send, X } from "lucide-react";
 import { Card, CardLabel } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -225,7 +225,7 @@ export function SettingsFeedbackForm() {
           ) : (
             <AlertCircle size={18} className="mt-0.5 shrink-0" />
           )}
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="font-medium">{message}</p>
             {state === "fallback" && mailtoUrl ? (
               <a
@@ -237,6 +237,18 @@ export function SettingsFeedbackForm() {
               </a>
             ) : null}
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setState("idle");
+              setMessage("");
+              setMailtoUrl("");
+            }}
+            aria-label="Dismiss feedback alert"
+            className="rounded-md p-0.5 opacity-70 transition-opacity hover:opacity-100"
+          >
+            <X size={15} />
+          </button>
         </div>
       ) : null}
 

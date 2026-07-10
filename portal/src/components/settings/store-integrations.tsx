@@ -11,6 +11,7 @@ import {
   Plug,
   Save,
   ShieldCheck,
+  X,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -54,7 +55,13 @@ function StatusBadge({ status }: { status: IntegrationStatus }) {
   );
 }
 
-function ResultLine({ result }: { result: ActionResult | null }) {
+function ResultLine({
+  result,
+  onDismiss,
+}: {
+  result: ActionResult | null;
+  onDismiss: () => void;
+}) {
   if (!result) return null;
   const tone = !result.ok ? "danger" : result.warning ? "warn" : "success";
   return (
@@ -71,7 +78,15 @@ function ResultLine({ result }: { result: ActionResult | null }) {
       ) : (
         <AlertCircle size={15} className="mt-0.5 shrink-0" />
       )}
-      <span>{result.message}</span>
+      <span className="min-w-0 flex-1">{result.message}</span>
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label="Dismiss alert"
+        className="ml-auto rounded-md p-0.5 opacity-70 transition-opacity hover:opacity-100"
+      >
+        <X size={14} />
+      </button>
     </div>
   );
 }
@@ -167,7 +182,7 @@ function IntegrationCard({
         </div>
       )}
 
-      <ResultLine result={result} />
+      <ResultLine result={result} onDismiss={() => setResult(null)} />
     </Card>
   );
 }
@@ -340,7 +355,7 @@ export function StoreIntegrations({ play, appStore }: Props) {
                 {playPending ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
                 Connect &amp; verify
               </button>
-              <ResultLine result={playResult} />
+              <ResultLine result={playResult} onDismiss={() => setPlayResult(null)} />
             </div>
           )}
         </IntegrationCard>
@@ -431,7 +446,7 @@ export function StoreIntegrations({ play, appStore }: Props) {
                   Save &amp; verify
                 </button>
               </div>
-              <ResultLine result={appResult} />
+              <ResultLine result={appResult} onDismiss={() => setAppResult(null)} />
             </div>
           )}
         </IntegrationCard>

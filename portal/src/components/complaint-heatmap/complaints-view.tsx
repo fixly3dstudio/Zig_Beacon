@@ -246,6 +246,8 @@ export function ComplaintsView({
   const [appStoreClusters, setAppStoreClusters] = useState<ComplaintClusterItem[]>([]);
   const [redditSignals, setRedditSignals] = useState<ComplaintSignal[]>([]);
   const [redditClusters, setRedditClusters] = useState<ComplaintClusterItem[]>([]);
+  const [playStoreSignals, setPlayStoreSignals] = useState<ComplaintSignal[]>([]);
+  const [playStoreClusters, setPlayStoreClusters] = useState<ComplaintClusterItem[]>([]);
 
   useEffect(() => {
     const appstore = getBrowserIntegrations().appstore;
@@ -271,6 +273,29 @@ export function ComplaintsView({
   }, []);
 
   useEffect(() => {
+    const play = getBrowserIntegrations().play;
+    if (!play) return;
+
+    fetch("/api/reviews/play-store-live", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(play),
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Could not load Play Store reviews.");
+        return (await response.json()) as { reviews?: ReviewComplaintSource[] };
+      })
+      .then((data) => {
+        const reviews = data.reviews ?? [];
+        const nextSignals = complaintSignalsFromReviews(reviews);
+        const nextClusters = complaintClustersFromReviews(reviews);
+        if (nextSignals.length > 0) setPlayStoreSignals(nextSignals);
+        if (nextClusters.length > 0) setPlayStoreClusters(nextClusters);
+      })
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
     fetch("/api/reddit-signals")
       .then(async (response) => {
         if (!response.ok) throw new Error("Could not load Reddit signals.");
@@ -288,17 +313,20 @@ export function ComplaintsView({
 
   const activeSignals = useMemo(() => {
     const byId = new Map<string, ComplaintSignal>();
-    for (const signal of [...signals, ...appStoreSignals, ...redditSignals]) {
+    for (const signal of [...signals, ...appStoreSignals, ...playStoreSignals, ...redditSignals]) {
       byId.set(`${signal.source}:${signal.id}:${signal.text}`, signal);
     }
     return Array.from(byId.values()).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
-  }, [appStoreSignals, redditSignals, signals]);
+  }, [appStoreSignals, playStoreSignals, redditSignals, signals]);
 
   const activeClusters = useMemo(
-    () => [...clusters, ...appStoreClusters, ...redditClusters].sort((a, b) => b.volume - a.volume),
-    [appStoreClusters, clusters, redditClusters]
+    () =>
+      [...clusters, ...appStoreClusters, ...playStoreClusters, ...redditClusters].sort(
+        (a, b) => b.volume - a.volume
+      ),
+    [appStoreClusters, playStoreClusters, clusters, redditClusters]
   );
   const activeSources = useMemo(
     () => Array.from(new Set(activeSignals.map((signal) => signal.source))),

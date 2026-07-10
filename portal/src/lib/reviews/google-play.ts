@@ -56,6 +56,63 @@ type PlayReview = {
   }[];
 };
 
+function googleErrorMessage(status: number, detail: string) {
+  let message = detail;
+  try {
+    const parsed = JSON.parse(detail) as {
+      error?: { message?: string; status?: string; details?: { reason?: string }[] };
+    };
+    message = parsed.error?.message ?? detail;
+  } catch {
+    message = detail;
+  }
+
+  if (
+    status === 403 &&
+    /api has not been used|disabled|accessNotConfigured/i.test(message)
+  ) {
+    return [
+      "Google Play reviews are not available yet because the Android Developer API is disabled for this Google Cloud project.",
+      "Open https://console.developers.google.com/apis/api/androidpublisher.googleapis.com/overview and enable it for the project that owns this service account.",
+      "Then confirm the service account is granted access to this app in Play Console → Users and permissions.",
+    ].join(" ");
+  }
+
+  if (status === 401 || /unauthorized|invalid_grant|invalid jwt/i.test(message)) {
+    return "Google Play authentication failed. Paste the full service account JSON again and make sure the private_key was not edited.";
+  }
+
+  if (status === 403) {
+    return [
+      `Google Play reviews fetch failed (${status}): ${message}`,
+      "Make sure the service account has access to this app in Play Console → Users and permissions, and that the package name is correct.",
+    ].join(" ");
+  }
+
+  return `Play reviews fetch failed (${status}): ${message.slice(0, 300)}`;
+}
+
+async function fetchReviewPage(creds: PlayCredentials, token: string, pageToken?: string) {
+  const url = new URL(
+    `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(
+      creds.packageName
+    )}/reviews`
+  );
+  url.searchParams.set("maxResults", "100");
+  if (pageToken) url.searchParams.set("token", pageToken);
+
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(googleErrorMessage(res.status, detail));
+  }
+
+  return (await res.json()) as {
+    reviews?: PlayReview[];
+    tokenPagination?: { nextPageToken?: string };
+  };
+}
+
 /**
  * Fetches recent Google Play reviews. NOTE: the Play Developer API only returns
  * reviews from roughly the last 7 days (and only those with comments). Full
@@ -70,24 +127,7 @@ export async function fetchGooglePlayReviews(
   let pageToken: string | undefined;
 
   do {
-    const url = new URL(
-      `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(
-        creds.packageName
-      )}/reviews`
-    );
-    url.searchParams.set("maxResults", "100");
-    if (pageToken) url.searchParams.set("token", pageToken);
-
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-    if (!res.ok) {
-      const detail = await res.text().catch(() => "");
-      throw new Error(`Play reviews fetch failed (${res.status}): ${detail.slice(0, 200)}`);
-    }
-
-    const data = (await res.json()) as {
-      reviews?: PlayReview[];
-      tokenPagination?: { nextPageToken?: string };
-    };
+    const data = await fetchReviewPage(creds, token, pageToken);
 
     for (const review of data.reviews ?? []) {
       const comment = review.comments?.find((c) => c.userComment)?.userComment;
@@ -111,7 +151,8 @@ export async function fetchGooglePlayReviews(
   return reviews;
 }
 
-/** Lightweight credential check: token exchange only. Throws on failure. */
+/** Credential check: token exchange + real reviews endpoint access. Throws on failure. */
 export async function verifyGooglePlay(creds: PlayCredentials): Promise<void> {
-  await getAccessToken(creds);
+  const token = await getAccessToken(creds);
+  await fetchReviewPage(creds, token);
 }
