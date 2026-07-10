@@ -8,6 +8,8 @@ import {
   Calendar,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ClipboardList,
   Loader2,
   Play,
@@ -50,6 +52,7 @@ type ReviewsViewProps = {
 };
 
 const RED = "var(--danger)";
+const PAGE_SIZE = 25;
 
 function Stars({ rating }: { rating: number }) {
   return (
@@ -98,6 +101,12 @@ function rangeCutoff(value: string): number | null {
   return days ? Date.now() - days * 86400000 : null;
 }
 
+function visiblePages(current: number, total: number) {
+  const start = Math.max(1, Math.min(current - 2, total - 4));
+  const end = Math.min(total, start + 4);
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+}
+
 export function ReviewsView({
   reviews,
   configured,
@@ -111,6 +120,7 @@ export function ReviewsView({
   const [sentimentFilter, setSentimentFilter] = useState<"All" | "positive" | "negative">("All");
   const [moduleFilter, setModuleFilter] = useState("All");
   const [rangeFilter, setRangeFilter] = useState("all");
+  const [page, setPage] = useState(1);
   const [ticketReview, setTicketReview] = useState<ReviewItem | null>(null);
   const [isPending, startTransition] = useTransition();
   const [syncResult, setSyncResult] = useState<SyncActionResult | null>(null);
@@ -215,7 +225,7 @@ export function ReviewsView({
           note:
             psReviews.length === 0
               ? "Connected, but Play returned no reviews (the API only serves ~7 days of commented reviews)."
-              : "Loaded live from your Play Store connection.",
+              : "Loaded all review rows currently available from your Play Store connection.",
         });
       } else {
         results.push({
@@ -291,6 +301,10 @@ export function ReviewsView({
     );
   }, [displayedReviews, storeFilter, ratingFilter, sentimentFilter, moduleFilter, rangeFilter]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [storeFilter, ratingFilter, sentimentFilter, moduleFilter, rangeFilter]);
+
   const hasCommentFilters =
     ratingFilter !== "All" ||
     sentimentFilter !== "All" ||
@@ -328,6 +342,19 @@ export function ReviewsView({
     const playStore = filtered.filter((r) => r.store === "Play Store").length;
     return { total, avg, negative, appStore, playStore };
   }, [filtered, hasCommentFilters, publicRating]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const pagedReviews = filtered.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+  const firstVisible = filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const lastVisible = Math.min(currentPage * PAGE_SIZE, filtered.length);
+
+  useEffect(() => {
+    if (page > pageCount) setPage(pageCount);
+  }, [page, pageCount]);
 
   const noStoreConnected = !connection.playStore && !connection.appStore;
 
@@ -600,7 +627,7 @@ export function ReviewsView({
 
       {/* Review list */}
       <div className="mt-5 space-y-3">
-        {filtered.map((review, i) => (
+        {pagedReviews.map((review, i) => (
           <motion.div
             key={review.id}
             initial={{ opacity: 0, y: 6 }}
@@ -665,6 +692,57 @@ export function ReviewsView({
           </div>
         )}
       </div>
+
+      {filtered.length > 0 && (
+        <div className="mt-5 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-muted">
+            Showing{" "}
+            <span className="font-medium text-foreground">
+              {firstVisible.toLocaleString()}-{lastVisible.toLocaleString()}
+            </span>{" "}
+            of <span className="font-medium text-foreground">{filtered.length.toLocaleString()}</span>{" "}
+            reviews
+          </p>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setPage((value) => Math.max(1, value - 1))}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium text-foreground transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeft size={14} />
+              Previous
+            </button>
+
+            {visiblePages(currentPage, pageCount).map((pageNumber) => (
+              <button
+                key={pageNumber}
+                type="button"
+                onClick={() => setPage(pageNumber)}
+                className={cn(
+                  "grid h-9 min-w-9 place-items-center rounded-lg border px-3 text-xs font-semibold transition-colors",
+                  currentPage === pageNumber
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border bg-background text-muted hover:text-foreground"
+                )}
+              >
+                {pageNumber}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              disabled={currentPage === pageCount}
+              onClick={() => setPage((value) => Math.min(pageCount, value + 1))}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium text-foreground transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {ticketReview && (
         <StoryModal review={ticketReview} onClose={() => setTicketReview(null)} />

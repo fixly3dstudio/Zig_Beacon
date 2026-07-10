@@ -19,7 +19,6 @@ export default async function ReviewsPage() {
       // ratingless store signals that share the same source label.
       where: { source: { in: ["App Store", "Play Store"] }, rating: { not: null } },
       orderBy: { createdAt: "desc" },
-      take: 300,
     }),
     getPlayCredentials(),
     getAppStoreCredentials(),
